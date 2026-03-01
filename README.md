@@ -1,7 +1,7 @@
 # AppCentral
 
 ## Intro
-AppCentral is a mobile-first mini-app platform that brings multiple everyday services into one host app. Users can discover and launch mini-apps (transportation, shopping, entertainment), receive notifications and live activity updates, and route tasks through a smart intent-based search experience.
+AppCentral is a mini-app platform that brings multiple everyday services into one host app. Users can discover and launch mini-apps (transportation, shopping, entertainment), receive notifications and live activity updates, and route tasks through a smart intent-based search experience.
 
 The core idea is to combine:
 - A secure mini-app runtime (sandboxed iframes + bridge messaging)
