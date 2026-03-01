@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SparkMart</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f2f2f2; color: #1a1a1a; -webkit-font-smoothing: antialiased; }
+
+    .header { background: #0071CE; color: white; padding: 0; position: sticky; top: 0; z-index: 100; }
+    .header-top { display: flex; align-items: center; padding: 10px 16px 0; gap: 10px; }
+    .spark-logo { flex-shrink: 0; width: 36px; height: 36px; position: relative; }
+    .spark-logo svg { width: 36px; height: 36px; }
+    .header-brand { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .header-brand h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; white-space: nowrap; }
+    .sdk-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; letter-spacing: 0.5px; vertical-align: middle; }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .cart-btn { position: relative; background: rgba(255,255,255,0.15); border: none; color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .cart-btn svg { width: 22px; height: 22px; fill: none; stroke: white; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .cart-badge { position: absolute; top: -2px; right: -2px; background: #FFC220; color: #1a1a1a; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+    .search-bar { margin: 10px 16px 12px; position: relative; }
+    .search-bar input { width: 100%; padding: 10px 14px 10px 38px; border-radius: 24px; border: none; font-size: 14px; background: white; color: #333; outline: none; }
+    .search-bar input::placeholder { color: #999; }
+    .search-bar .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); }
+    .search-bar .search-icon svg { width: 18px; height: 18px; fill: none; stroke: #666; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .fulfillment-bar { display: flex; align-items: center; gap: 8px; padding: 0 16px 12px; }
+    .fulfillment-toggle { display: flex; background: rgba(255,255,255,0.15); border-radius: 24px; overflow: hidden; border: 2px solid rgba(255,255,255,0.3); flex: 1; }
+    .fulfillment-opt { flex: 1; text-align: center; padding: 9px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; color: rgba(255,255,255,0.85); white-space: nowrap; border-radius: 22px; }
+    .fulfillment-opt.active { background: white; color: #0071CE; }
+    .fulfillment-opt .fulfillment-sub { font-size: 10px; font-weight: 500; opacity: 0.8; margin-top: 1px; }
+    .fulfillment-opt.active .fulfillment-sub { color: #333; }
+
+    .bridge-bar { background: #e6f0fa; border-bottom: 1px solid #cce0f5; padding: 10px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .bridge-btn { background: #0071CE; color: white; border: none; padding: 7px 14px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .bridge-btn:hover { background: #004f9a; }
+    .bridge-btn.done { background: #22c55e; pointer-events: none; }
+    .bridge-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .bridge-status { font-size: 11px; color: #64748b; flex: 1; text-align: right; }
+    .location-bar { background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 8px 16px; font-size: 11px; color: #15803d; display: none; align-items: center; gap: 6px; }
+    .location-bar.visible { display: flex; }
+    .location-bar.error { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+
+    .rollback-banner { margin: 12px 16px; background: linear-gradient(135deg, #0071CE 0%, #004f9a 100%); border-radius: 14px; padding: 20px; color: white; position: relative; overflow: hidden; }
+    .rollback-banner::before { content: ''; position: absolute; top: -40px; right: -20px; width: 120px; height: 120px; background: rgba(255,194,32,0.12); border-radius: 50%; }
+    .rollback-banner::after { content: ''; position: absolute; bottom: -30px; right: 40px; width: 80px; height: 80px; background: rgba(255,194,32,0.08); border-radius: 50%; }
+    .rollback-label { display: inline-block; background: #FFC220; color: #1a1a1a; padding: 4px 14px; border-radius: 4px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .rollback-banner h2 { font-size: 20px; font-weight: 800; line-height: 1.2; }
+    .rollback-banner p { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+    .rollback-savings { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-top: 12px; cursor: pointer; }
+    .rollback-savings svg { width: 14px; height: 14px; fill: none; stroke: #FFC220; stroke-width: 2.5; }
+
+    .section-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 16px 10px; gap: 8px; }
+    .section-header h3 { font-size: 17px; font-weight: 700; color: #1a1a1a; }
+    .section-header .see-all { font-size: 13px; font-weight: 600; color: #0071CE; cursor: pointer; white-space: nowrap; }
+
+    .dept-scroll { display: flex; gap: 16px; padding: 0 16px 16px; overflow-x: auto; scrollbar-width: none; }
+    .dept-scroll::-webkit-scrollbar { display: none; }
+    .dept-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; width: 68px; }
+    .dept-item:active .dept-circle { transform: scale(0.93); }
+    .dept-circle { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: transform 0.15s; }
+    .dept-label { font-size: 11px; font-weight: 600; color: #333; text-align: center; line-height: 1.2; }
+
+    .weekly-scroll { display: flex; gap: 12px; padding: 0 16px 4px; overflow-x: auto; scrollbar-width: none; }
+    .weekly-scroll::-webkit-scrollbar { display: none; }
+    .weekly-card { min-width: 150px; width: 150px; background: white; border-radius: 12px; overflow: hidden; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .weekly-img { height: 110px; display: flex; align-items: center; justify-content: center; font-size: 44px; position: relative; }
+    .weekly-tag { position: absolute; top: 8px; left: 8px; background: #FFC220; color: #1a1a1a; font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .weekly-tag.low-price { background: #0071CE; color: white; }
+    .weekly-tag.savings { background: #e8f5e9; color: #2e7d32; }
+    .weekly-info { padding: 10px 12px; }
+    .weekly-info .w-name { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 6px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .weekly-info .w-price { font-size: 18px; font-weight: 800; color: #0071CE; }
+    .weekly-info .w-was { font-size: 12px; color: #999; text-decoration: line-through; margin-left: 6px; }
+    .weekly-info .w-unit { font-size: 10px; color: #666; margin-top: 2px; }
+
+    .dept-tab-bar { display: flex; gap: 6px; padding: 0 16px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
+    .dept-tab-bar::-webkit-scrollbar { display: none; }
+    .dept-tab { white-space: nowrap; padding: 7px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 2px solid #ddd; background: white; color: #555; transition: all 0.15s; flex-shrink: 0; }
+    .dept-tab.active { background: #0071CE; color: white; border-color: #0071CE; }
+
+    .product-list { padding: 0 16px 8px; display: flex; flex-direction: column; gap: 10px; }
+    .product-card { background: white; border-radius: 12px; display: flex; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .product-img { width: 110px; min-height: 120px; display: flex; align-items: center; justify-content: center; font-size: 40px; flex-shrink: 0; position: relative; }
+    .rollback-badge { position: absolute; top: 8px; left: 8px; background: #FFC220; color: #1a1a1a; font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .product-info { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+    .product-info .p-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; color: #1a1a1a; line-height: 1.3; }
+    .product-info .p-desc { font-size: 12px; color: #666; margin-bottom: 6px; }
+    .product-info .p-stars { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+    .product-info .p-stars .star-icons { color: #FFC220; font-size: 12px; letter-spacing: 1px; }
+    .product-info .p-stars .star-count { font-size: 11px; color: #666; }
+    .product-info .price-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .product-info .p-price { font-size: 20px; font-weight: 800; color: #0071CE; }
+    .product-info .p-was { font-size: 13px; color: #999; text-decoration: line-through; }
+    .product-info .p-fulfill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; margin-top: 6px; padding: 3px 8px; border-radius: 4px; }
+    .product-info .p-fulfill.pickup { background: #e8f5e9; color: #2e7d32; }
+    .product-info .p-fulfill.delivery { background: #e3f2fd; color: #0071CE; }
+
+    .store-section { margin: 0 16px 16px; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .store-section-header { background: #0071CE; color: white; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+    .store-section-header svg { width: 22px; height: 22px; fill: none; stroke: white; stroke-width: 2; }
+    .store-section-header h4 { font-size: 15px; font-weight: 700; }
+    .store-card { padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; }
+    .store-card:active { background: #fafafa; }
+    .store-icon-wrap { width: 48px; height: 48px; background: #e6f0fa; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .store-icon-wrap svg { width: 24px; height: 24px; fill: none; stroke: #0071CE; stroke-width: 2; }
+    .store-details { flex: 1; min-width: 0; }
+    .store-details .s-name { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    .store-details .s-info { font-size: 12px; color: #666; margin-top: 2px; }
+    .store-details .s-hours { font-size: 11px; color: #2e7d32; font-weight: 600; margin-top: 4px; }
+    .store-arrow { color: #999; font-size: 20px; flex-shrink: 0; }
+
+    .bottom-spacer { height: 32px; }
+
+    @media (min-width: 400px) {
+      .dept-item { width: 76px; }
+      .dept-circle { width: 64px; height: 64px; font-size: 28px; }
+      .weekly-card { min-width: 160px; width: 160px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-top">
+      <div class="header-brand">
+        <div class="spark-logo">
+          <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(18,18)">
+              <polygon points="0,-15 3,-5 0,-7 -3,-5" fill="#FFC220" transform="rotate(0)"/>
+              <polygon points="0,-15 3,-5 0,-7 -3,-5" fill="#FFC220" transform="rotate(60)"/>
+              <polygon points="0,-15 3,-5 0,-7 -3,-5" fill="#FFC220" transform="rotate(120)"/>
+              <polygon points="0,-15 3,-5 0,-7 -3,-5" fill="#FFC220" transform="rotate(180)"/>
+              <polygon points="0,-15 3,-5 0,-7 -3,-5" fill="#FFC220" transform="rotate(240)"/>
+              <polygon points="0,-15 3,-5 0,-7 -3,-5" fill="#FFC220" transform="rotate(300)"/>
+            </g>
+          </svg>
+        </div>
+        <h1>SparkMart</h1>
+        <span class="sdk-badge">SDK v1</span>
+      </div>
+      <div class="header-actions">
+        <button class="cart-btn" onclick="toggleCart()" data-testid="button-cart">
+          <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-badge" id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+      <input type="text" placeholder="Search SparkMart" data-testid="input-search" />
+    </div>
+    <div class="fulfillment-bar">
+      <div class="fulfillment-toggle">
+        <div class="fulfillment-opt active" onclick="setFulfillment(this,'pickup')" id="pickupOpt" data-testid="button-pickup">
+          <div>Pickup</div>
+          <div class="fulfillment-sub">Today</div>
+        </div>
+        <div class="fulfillment-opt" onclick="setFulfillment(this,'delivery')" id="deliveryOpt" data-testid="button-delivery">
+          <div>Delivery</div>
+          <div class="fulfillment-sub">As fast as 1hr</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bridge-bar">
+    <button class="bridge-btn" onclick="handleAuth()" id="authBtn" data-testid="button-auth">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Sign In
+    </button>
+    <button class="bridge-btn" onclick="handleLocation()" id="locBtn" data-testid="button-location">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Find Store
+    </button>
+    <span class="bridge-status" id="bridgeStatus" data-testid="text-bridge-status">SDK: initializing</span>
+  </div>
+
+  <div class="location-bar" id="locationBar" data-testid="text-location"></div>
+
+  <div class="rollback-banner">
+    <div class="rollback-label">Rollback</div>
+    <h2>Thousands of items. Everyday low prices.</h2>
+    <p>Shop the best deals across every department</p>
+    <div class="rollback-savings">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Save up to 40% this week
+    </div>
+  </div>
+
+  <div class="section-header">
+    <h3>Shop by Department</h3>
+    <span class="see-all">See All</span>
+  </div>
+  <div class="dept-scroll" id="deptScroll"></div>
+
+  <div class="section-header">
+    <h3>Weekly Ad Highlights</h3>
+    <span class="see-all">View Ad</span>
+  </div>
+  <div class="weekly-scroll" id="weeklyScroll"></div>
+
+  <div class="section-header">
+    <h3>Popular in <span id="activeDeptLabel">Grocery</span></h3>
+    <span class="see-all">See All</span>
+  </div>
+  <div class="dept-tab-bar" id="deptTabs"></div>
+  <div class="product-list" id="productList"></div>
+
+  <div class="section-header">
+    <h3>Your Store</h3>
+  </div>
+  <div class="store-section">
+    <div class="store-section-header">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <h4>Store Finder</h4>
+    </div>
+    <div class="store-card" onclick="handleLocation()" data-testid="button-store-finder">
+      <div class="store-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <div class="store-details">
+        <div class="s-name" id="storeName">Tap to find nearby stores</div>
+        <div class="s-info" id="storeAddr">Use location to see closest SparkMart</div>
+        <div class="s-hours" id="storeHours"></div>
+      </div>
+      <div class="store-arrow">&#8250;</div>
+    </div>
+  </div>
+
+  <div class="bottom-spacer"></div>
+
+  <script src="/sdk/v1.js"></script>
+  <script>
+    var authed = false;
+    var cartItems = 0;
+    var fulfillment = 'pickup';
+    var activeDept = 'Grocery';
+
+    var DEPARTMENTS = [
+      { name: 'Grocery', icon: '&#129367;', color: '#dcfce7' },
+      { name: 'Electronics', icon: '&#128187;', color: '#dbeafe' },
+      { name: 'Pharmacy', icon: '&#128138;', color: '#fce7f3' },
+      { name: 'Home', icon: '&#127968;', color: '#e0e7ff' },
+      { name: 'Clothing', icon: '&#128085;', color: '#f3e8ff' },
+      { name: 'Auto', icon: '&#128663;', color: '#fef3c7' },
+      { name: 'Baby', icon: '&#128118;', color: '#fff1f2' },
+      { name: 'Pets', icon: '&#128054;', color: '#fef9c3' }
+    ];
+
+    var WEEKLY = [
+      { name: 'Organic Bananas', price: '$0.98', was: '$1.47', icon: '&#127820;', bg: '#fef9c3', tag: 'Rollback', tagClass: '' },
+      { name: 'Paper Towels 12pk', price: '$11.97', was: '$15.98', icon: '&#129531;', bg: '#e0e7ff', tag: 'Rollback', tagClass: '' },
+      { name: 'Laundry Detergent', price: '$9.97', was: '$13.48', icon: '&#129532;', bg: '#dbeafe', tag: 'Savings', tagClass: 'savings' },
+      { name: 'Ground Coffee 32oz', price: '$7.44', was: '$9.98', icon: '&#9749;', bg: '#fef3c7', tag: 'Rollback', tagClass: '' },
+      { name: 'Whole Chicken', price: '$5.97', was: '$8.49', icon: '&#127831;', bg: '#dcfce7', tag: 'Low Price', tagClass: 'low-price' }
+    ];
+
+    var PRODUCTS = {
+      Grocery: [
+        { name: 'Great Value Milk, Gallon', desc: 'Whole, 2%, or Skim', price: '$3.36', was: '$3.98', icon: '&#129371;', bg: '#fef9c3', stars: 4, reviews: 1247, rollback: true, pickup: true },
+        { name: 'Fresh Ground Beef, 1lb', desc: '80/20 Lean', price: '$5.47', was: '', icon: '&#129385;', bg: '#fecaca', stars: 4, reviews: 892, rollback: false, pickup: true },
+        { name: 'White Bread Loaf', desc: 'Great Value, 20oz', price: '$1.18', was: '$1.48', icon: '&#127838;', bg: '#fef3c7', stars: 5, reviews: 2341, rollback: true, pickup: true },
+        { name: 'Dozen Large Eggs', desc: 'Great Value, Grade A', price: '$3.12', was: '$4.26', icon: '&#129370;', bg: '#fff7ed', stars: 4, reviews: 3102, rollback: true, pickup: true }
+      ],
+      Electronics: [
+        { name: '50" 4K Smart TV', desc: 'onn. Roku TV, HDR', price: '$228.00', was: '$298.00', icon: '&#128250;', bg: '#dbeafe', stars: 4, reviews: 5621, rollback: true, pickup: false },
+        { name: 'Wireless Earbuds', desc: 'onn. True Wireless, BT 5.0', price: '$14.88', was: '$19.88', icon: '&#127911;', bg: '#e0e7ff', stars: 4, reviews: 3892, rollback: true, pickup: true },
+        { name: 'Tablet 10.1"', desc: 'onn. Android, 32GB', price: '$79.00', was: '$99.00', icon: '&#128241;', bg: '#f3e8ff', stars: 3, reviews: 1456, rollback: true, pickup: true },
+        { name: 'USB-C Charger Cable', desc: '6ft Braided, Fast Charge', price: '$5.97', was: '', icon: '&#128268;', bg: '#fef3c7', stars: 5, reviews: 7823, rollback: false, pickup: true }
+      ],
+      Pharmacy: [
+        { name: 'Ibuprofen 200mg', desc: 'Equate, 100 tablets', price: '$3.98', was: '$5.48', icon: '&#128138;', bg: '#fce7f3', stars: 5, reviews: 4521, rollback: true, pickup: true },
+        { name: 'Multivitamins', desc: 'Equate Daily, 200ct', price: '$7.47', was: '', icon: '&#128137;', bg: '#dcfce7', stars: 4, reviews: 2103, rollback: false, pickup: true },
+        { name: 'Allergy Relief', desc: 'Equate Cetirizine 30ct', price: '$4.88', was: '$7.99', icon: '&#129657;', bg: '#dbeafe', stars: 4, reviews: 1890, rollback: true, pickup: true }
+      ],
+      Home: [
+        { name: 'Bath Towel Set 6pc', desc: 'Mainstays, 100% Cotton', price: '$12.97', was: '$17.98', icon: '&#129531;', bg: '#dbeafe', stars: 4, reviews: 3456, rollback: true, pickup: true },
+        { name: 'LED Bulbs 8pk', desc: 'Great Value, 60W Equiv', price: '$5.96', was: '$8.47', icon: '&#128161;', bg: '#fef9c3', stars: 5, reviews: 5678, rollback: true, pickup: true },
+        { name: 'Storage Bins 4pk', desc: 'Sterilite, Stackable Clear', price: '$9.97', was: '', icon: '&#128230;', bg: '#e0e7ff', stars: 4, reviews: 2345, rollback: false, pickup: true }
+      ],
+      Clothing: [
+        { name: 'Men\'s Crew Tee 2pk', desc: 'George, Cotton Blend', price: '$9.96', was: '$12.98', icon: '&#128085;', bg: '#f3e8ff', stars: 4, reviews: 1234, rollback: true, pickup: true },
+        { name: 'Women\'s Joggers', desc: 'Time and Tru, S-XXL', price: '$14.98', was: '$19.98', icon: '&#128086;', bg: '#fce7f3', stars: 4, reviews: 2567, rollback: true, pickup: true }
+      ],
+      Auto: [
+        { name: 'Motor Oil 5qt', desc: 'SuperTech Full Synthetic', price: '$21.97', was: '$27.98', icon: '&#128738;', bg: '#fef3c7', stars: 5, reviews: 4567, rollback: true, pickup: true },
+        { name: 'Wiper Blades 2pk', desc: 'RainX Latitude, All-season', price: '$19.88', was: '', icon: '&#128663;', bg: '#e0e7ff', stars: 4, reviews: 1890, rollback: false, pickup: true },
+        { name: 'Car Phone Mount', desc: 'onn. Dash & Vent Clip', price: '$7.44', was: '$9.98', icon: '&#128241;', bg: '#dbeafe', stars: 4, reviews: 3456, rollback: true, pickup: true }
+      ],
+      Baby: [
+        { name: 'Diapers Size 3, 168ct', desc: 'Parent\'s Choice', price: '$19.94', was: '$24.97', icon: '&#128118;', bg: '#fff1f2', stars: 4, reviews: 6789, rollback: true, pickup: true },
+        { name: 'Baby Wipes 800ct', desc: 'Parent\'s Choice, Unscented', price: '$12.97', was: '$16.48', icon: '&#129531;', bg: '#e0e7ff', stars: 5, reviews: 4321, rollback: true, pickup: true }
+      ],
+      Pets: [
+        { name: 'Dog Food 40lb', desc: 'Ol\' Roy Complete, Chicken', price: '$18.98', was: '$22.47', icon: '&#128054;', bg: '#fef9c3', stars: 4, reviews: 5432, rollback: true, pickup: true },
+        { name: 'Cat Litter 35lb', desc: 'Special Kitty, Clumping', price: '$7.47', was: '$9.98', icon: '&#128049;', bg: '#dcfce7', stars: 4, reviews: 3210, rollback: true, pickup: true }
+      ]
+    };
+
+    function renderDepartments() {
+      document.getElementById('deptScroll').innerHTML = DEPARTMENTS.map(function(d) {
+        return '<div class="dept-item" onclick="selectDept(\'' + d.name + '\')" data-testid="button-dept-' + d.name.toLowerCase() + '">' +
+          '<div class="dept-circle" style="background:' + d.color + '">' + d.icon + '</div>' +
+          '<div class="dept-label">' + d.name + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderWeekly() {
+      document.getElementById('weeklyScroll').innerHTML = WEEKLY.map(function(w, i) {
+        return '<div class="weekly-card" data-testid="card-weekly-' + i + '">' +
+          '<div class="weekly-img" style="background:' + w.bg + '">' + w.icon +
+            '<span class="weekly-tag ' + w.tagClass + '">' + w.tag + '</span>' +
+          '</div>' +
+          '<div class="weekly-info">' +
+            '<div class="w-name">' + w.name + '</div>' +
+            '<div><span class="w-price">' + w.price + '</span><span class="w-was">' + w.was + '</span></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderStars(n, reviews) {
+      var s = '';
+      for (var i = 0; i < 5; i++) s += i < n ? '&#9733;' : '&#9734;';
+      return '<div class="p-stars"><span class="star-icons">' + s + '</span><span class="star-count">(' + (reviews || 0) + ')</span></div>';
+    }
+
+    function renderProducts(dept) {
+      var items = PRODUCTS[dept] || [];
+      document.getElementById('productList').innerHTML = items.map(function(p, i) {
+        var fulfillLabel = fulfillment === 'pickup' && p.pickup ? 'Pickup today' : 'Delivery available';
+        var fulfillClass = fulfillment === 'pickup' && p.pickup ? 'pickup' : 'delivery';
+        return '<div class="product-card" data-testid="card-product-' + dept.toLowerCase() + '-' + i + '">' +
+          '<div class="product-img" style="background:' + p.bg + '">' + p.icon +
+            (p.rollback ? '<span class="rollback-badge">Rollback</span>' : '') +
+          '</div>' +
+          '<div class="product-info">' +
+            '<div class="p-name">' + p.name + '</div>' +
+            '<div class="p-desc">' + p.desc + '</div>' +
+            renderStars(p.stars, p.reviews) +
+            '<div class="price-row">' +
+              '<span class="p-price">' + p.price + '</span>' +
+              (p.was ? '<span class="p-was">' + p.was + '</span>' : '') +
+            '</div>' +
+            '<div class="p-fulfill ' + fulfillClass + '">' +
+              (fulfillClass === 'pickup' ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>') +
+              fulfillLabel +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderDeptTabs() {
+      document.getElementById('deptTabs').innerHTML = DEPARTMENTS.map(function(d) {
+        return '<div class="dept-tab' + (d.name === activeDept ? ' active' : '') + '" onclick="selectDept(\'' + d.name + '\')" data-testid="tab-dept-' + d.name.toLowerCase() + '">' + d.name + '</div>';
+      }).join('');
+    }
+
+    function selectDept(name) {
+      activeDept = name;
+      document.getElementById('activeDeptLabel').textContent = name;
+      renderDeptTabs();
+      renderProducts(name);
+    }
+
+    function setFulfillment(el, type) {
+      fulfillment = type;
+      document.querySelectorAll('.fulfillment-opt').forEach(function(o) { o.classList.remove('active'); });
+      el.classList.add('active');
+      renderProducts(activeDept);
+    }
+
+    function toggleCart() {
+      cartItems++;
+      document.getElementById('cartCount').textContent = cartItems;
+    }
+
+    function handleAuth() {
+      var btn = document.getElementById('authBtn');
+      btn.disabled = true;
+      document.getElementById('bridgeStatus').textContent = 'SDK: requesting auth...';
+
+      MiniApp.requestAuthCode()
+        .then(function(code) {
+          authed = true;
+          btn.textContent = 'Signed In';
+          btn.className = 'bridge-btn done';
+          document.getElementById('bridgeStatus').textContent = 'SDK: authenticated';
+
+          setTimeout(function() {
+            MiniApp.sendNotification({
+              title: 'Your pickup order is ready!',
+              body: 'Order #VS-48291 is ready for pickup at SparkMart. Head to the designated pickup area.',
+              data: { orderId: 'VS-48291', status: 'ready' }
+            }).catch(function() {});
+          }, 3000);
+        })
+        .catch(function(err) {
+          document.getElementById('bridgeStatus').textContent = 'Auth: ' + err.message;
+          btn.disabled = false;
+        });
+    }
+
+    function handleLocation() {
+      var btn = document.getElementById('locBtn');
+      btn.disabled = true;
+      document.getElementById('bridgeStatus').textContent = 'SDK: requesting location...';
+
+      MiniApp.getLocation()
+        .then(function(loc) {
+          var bar = document.getElementById('locationBar');
+          bar.className = 'location-bar visible';
+          bar.innerHTML = '&#128205; Location: ' + loc.latitude.toFixed(4) + ', ' + loc.longitude.toFixed(4);
+          btn.textContent = 'Store Found';
+          btn.className = 'bridge-btn done';
+          document.getElementById('bridgeStatus').textContent = 'SDK: location acquired';
+          document.getElementById('storeName').textContent = 'SparkMart Supercenter #4218';
+          document.getElementById('storeAddr').textContent = '2501 SE Federal Hwy \u00B7 1.3 mi away';
+          document.getElementById('storeHours').textContent = 'Open \u00B7 Closes at 11pm';
+        })
+        .catch(function(err) {
+          var bar = document.getElementById('locationBar');
+          bar.className = 'location-bar visible error';
+          bar.innerHTML = '&#10060; ' + err.message;
+          document.getElementById('bridgeStatus').textContent = 'Location: ' + err.message;
+          btn.disabled = false;
+        });
+    }
+
+    MiniApp.on('error', function(msg) {
+      var bar = document.getElementById('locationBar');
+      bar.className = 'location-bar visible error';
+      bar.innerHTML = '&#128683; ' + (msg.message || 'Permission denied by host');
+      document.getElementById('bridgeStatus').textContent = 'Error: ' + msg.code;
+    });
+
+    renderDepartments();
+    renderWeekly();
+    renderDeptTabs();
+    renderProducts(activeDept);
+
+    MiniApp.init().then(function() {
+      document.getElementById('bridgeStatus').textContent = 'SDK: connected';
+    });
+  </script>
+</body>
+</html>

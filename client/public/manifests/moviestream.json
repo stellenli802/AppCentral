@@ -1,0 +1,15 @@
+{
+  "id": "moviestream",
+  "name": "StreamFlix",
+  "description": "Stream movies and TV shows. Browse by genre, manage your watchlist, and get personalized recommendations.",
+  "icon": "StreamFlixIcon",
+  "color": "#000000",
+  "category": "entertainment",
+  "entryUrl": "/mini-apps/moviestream.html",
+  "permissions": ["identity"],
+  "allowedOrigins": ["*"],
+  "version": "4.2.0",
+  "developer": "StreamFlix Media",
+  "intents": ["BROWSE_MOVIES", "WATCH_CONTENT", "MANAGE_WATCHLIST"],
+  "sdk": "/sdk.js"
+}

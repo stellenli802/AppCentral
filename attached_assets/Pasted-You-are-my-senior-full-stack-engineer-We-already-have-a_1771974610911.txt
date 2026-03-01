@@ -1,0 +1,126 @@
+You are my senior full-stack engineer. We already have a working hub dashboard, a mini-app runner (iframe/WebView-like), a postMessage bridge (REQUEST_AUTH_CODE, REQUEST_LOCATION), 3 real mini-apps (Transit Now, ParkFinder, Travel Hub), and external service routing (Uber/Yelp/Expedia).
+
+Now implement the next 3 highest-ROI upgrades. Keep changes minimal, readable, and demo-focused. Do NOT introduce unnecessary libraries. Use TypeScript. Validate inputs. Prefer shared types in /shared.
+
+========================================
+(1) PERMISSIONS SYSTEM (platform feel)
+========================================
+
+Goal: When a mini-app requests sensitive APIs (location/auth), the host enforces permissions with a native-looking consent modal, stores per-mini-app permissions, and exposes a “Permissions” settings page.
+
+Requirements:
+- Add per-mini-app permissions state:
+  - Store in DB if available; otherwise local storage (persist across reload).
+  - Keyed by {userId, miniAppId, permissionName}.
+  - Support: "location", "auth" (auth = REQUEST_AUTH_CODE).
+- In the runner bridge handler:
+  - On REQUEST_LOCATION:
+    - If permission already granted → respond with LOCATION immediately.
+    - If not granted → show modal:
+      “{MiniAppName} wants to access your Location”
+      Buttons: [Allow once] [Always allow] [Deny]
+        - Allow once: grant for current session only (in-memory).
+        - Always allow: persist.
+        - Deny: respond with an ERROR message type.
+  - On REQUEST_AUTH_CODE:
+    - Same flow, but permission name = "auth".
+- Add new bridge response type:
+  - HOST_ERROR { requestType, code, message }
+- Update mini-apps to gracefully handle HOST_ERROR and display a friendly message in-app.
+
+Permissions Settings Page:
+- Route: /settings/permissions
+- UI: list each mini-app with toggles:
+  - Location: On/Off
+  - Auth: On/Off
+- Toggling Off should revoke persistent permission.
+
+Also add a small “Permissions” entry point in the hub UI (e.g. settings icon dropdown).
+
+========================================
+(2) DEV MODE: “ADD MINI-APP” PUBLISH FLOW
+========================================
+
+Goal: Prove extensibility. Add a Developer Mode that lets us add mini-apps to the manifest at runtime.
+
+Requirements:
+- Add a “Developer Mode” toggle in settings (store flag per user).
+- When enabled, show a “+ Add Mini-App” button on the dashboard.
+- Add page: /dev/add-miniapp with a form:
+  - name
+  - description
+  - category (select)
+  - entryUrl
+  - allowedOrigin
+  - permissions (checkboxes: location, auth)
+- Validation rules:
+  - entryUrl must be https OR same-origin (for local dev).
+  - allowedOrigin must match origin of entryUrl.
+  - Reject empty fields; show inline errors.
+- On submit:
+  - Save to mini-app registry (DB or local persistent store).
+  - Return to dashboard and the new mini-app appears immediately.
+- Add “Verified” badge logic:
+  - If allowedOrigin is our own domain → show “Verified”
+  - Else show “Unverified” and warn that permissions will be blocked by default unless user explicitly grants.
+
+========================================
+(3) DYNAMIC SMART ACTIONS + INTENT ROUTER RESULTS
+========================================
+
+Goal: Make the home screen and search feel intelligent, not static.
+
+A) Smart Actions (Home):
+- Change “Smart Actions” cards to be dynamic and user/context driven:
+  - Transit Now: “Next arrivals in 2–6 min”
+  - ParkFinder: “12 spots nearby”
+  - Travel Hub: “Check-in opens in 3h”
+- These can be mocked, but must update based on:
+  - a refresh button OR
+  - a timer every ~30s OR
+  - if location permission granted, vary copy slightly (e.g., “near you”).
+- Clicking a Smart Action opens the relevant mini-app directly in runner.
+
+B) Search results grouping (Intent Router):
+- Update search to return grouped sections:
+  1) Actions (quick actions): e.g. “Find parking near me”, “Check flight status”
+  2) Mini-apps (internal)
+  3) External services (Uber/Yelp/Expedia)
+- Implement a lightweight intent classifier:
+  - keyword rules are fine, but structure it as an IntentRouter module:
+    - input string -> {intent, entities?} + ranked results
+- Results should show badges:
+  - “Mini-app”
+  - “Action”
+  - “External”
+- Quick actions should deep-link into:
+  - runner with prefilled state in query params (e.g., /runner/parkfinder?mode=nearby)
+  - OR open external route (web fallback).
+
+========================================
+IMPLEMENTATION NOTES
+========================================
+- Keep shared types for:
+  - MiniAppManifest
+  - BridgeMessage schemas (include HOST_ERROR)
+  - Permission names / states
+- Ensure origin allowlist remains strict:
+  - Only accept postMessage from allowedOrigin.
+- Add minimal UI polish:
+  - modal with clean copy
+  - badges
+  - empty states
+
+Deliverables:
+- Working consent modal flow in runner for location/auth.
+- /settings/permissions page.
+- Developer Mode toggle + /dev/add-miniapp page and add flow.
+- Home Smart Actions are dynamic.
+- Search results are grouped and show actions + mini-apps + external services.
+
+Start by:
+1) Adding shared types + message schemas (with HOST_ERROR)
+2) Implement permissions storage + modal in runner
+3) Build permissions settings page
+4) Add dev mode + add-miniapp flow
+5) Update home smart actions and search grouping

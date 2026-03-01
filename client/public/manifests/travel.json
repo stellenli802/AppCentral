@@ -1,0 +1,15 @@
+{
+  "id": "travel",
+  "name": "Travel Hub",
+  "description": "Check-in to flights, view boarding passes, and track flight status. Your travel companion.",
+  "icon": "Plane",
+  "color": "#8B5CF6",
+  "category": "travel",
+  "entryUrl": "/mini-apps/travel.html",
+  "permissions": ["identity"],
+  "allowedOrigins": ["*"],
+  "version": "3.0.1",
+  "developer": "SkyBridge Travel",
+  "intents": ["CHECK_FLIGHT", "FLIGHT_CHECKIN", "SEARCH_FLIGHTS"],
+  "sdk": "/sdk.js"
+}

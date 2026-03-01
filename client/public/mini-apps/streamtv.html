@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamTV</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9f9f9; color: #0f0f0f; -webkit-font-smoothing: antialiased; }
+
+    .header { background: #fff; padding: 8px 12px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #e5e5e5; }
+    .header-row { display: flex; align-items: center; gap: 12px; }
+    .logo-group { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .yt-logo { display: flex; align-items: center; justify-content: center; width: 28px; height: 20px; background: #FF0000; border-radius: 4px; position: relative; }
+    .yt-logo::after { content: ''; display: block; width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 9px; border-color: transparent transparent transparent #fff; margin-left: 1px; }
+    .logo-text { font-size: 17px; font-weight: 700; color: #0f0f0f; letter-spacing: -0.5px; margin-left: 4px; }
+    .sdk-badge { display: inline-block; background: #fee2e2; color: #cc0000; padding: 2px 6px; border-radius: 4px; font-size: 8px; font-weight: 700; letter-spacing: 0.5px; margin-left: 4px; vertical-align: middle; }
+
+    .search-area { flex: 1; display: flex; align-items: center; gap: 8px; }
+    .search-container { flex: 1; display: flex; align-items: center; height: 36px; }
+    .search-input { flex: 1; height: 100%; border: 1px solid #ccc; border-right: none; border-radius: 20px 0 0 20px; padding: 0 16px; font-size: 14px; outline: none; background: #fff; color: #0f0f0f; }
+    .search-input::placeholder { color: #909090; }
+    .search-input:focus { border-color: #1c62b9; }
+    .search-btn { height: 100%; width: 50px; border: 1px solid #ccc; border-left: none; border-radius: 0 20px 20px 0; background: #f8f8f8; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .search-btn:hover { background: #f0f0f0; }
+    .search-btn svg { width: 18px; height: 18px; fill: #0f0f0f; }
+    .voice-btn { width: 36px; height: 36px; border-radius: 50%; background: #f2f2f2; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .voice-btn:hover { background: #e5e5e5; }
+    .voice-btn svg { width: 18px; height: 18px; fill: #0f0f0f; }
+
+    .bridge-bar { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .bridge-btn { background: #FF0000; color: white; border: none; padding: 7px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 5px; transition: background 0.15s; }
+    .bridge-btn:hover { background: #cc0000; }
+    .bridge-btn.done { background: #065fd4; pointer-events: none; }
+    .bridge-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .bridge-status { font-size: 11px; color: #606060; flex: 1; text-align: right; }
+
+    .chips { display: flex; gap: 8px; padding: 10px 12px; overflow-x: auto; background: #fff; border-bottom: 1px solid #e5e5e5; -ms-overflow-style: none; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip { flex-shrink: 0; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; background: #f2f2f2; color: #0f0f0f; border: none; transition: background 0.15s, color 0.15s; white-space: nowrap; }
+    .chip.active { background: #0f0f0f; color: #fff; }
+    .chip:hover:not(.active) { background: #e5e5e5; }
+
+    .content { padding: 0 0 20px 0; }
+
+    .section-header { display: flex; align-items: center; gap: 8px; padding: 20px 12px 12px 12px; }
+    .section-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .section-title { font-size: 18px; font-weight: 700; color: #0f0f0f; }
+    .section-subtitle { font-size: 12px; color: #606060; margin-left: auto; font-weight: 500; cursor: pointer; }
+
+    .video-feed { display: flex; flex-direction: column; gap: 16px; }
+
+    .video-card { cursor: pointer; background: #fff; }
+    .thumbnail { width: 100%; aspect-ratio: 16/9; position: relative; overflow: hidden; background: #e5e5e5; }
+    .thumbnail-bg { width: 100%; height: 100%; }
+    .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; background: rgba(0,0,0,0.35); }
+    .video-card:hover .play-overlay { opacity: 1; }
+    .play-circle { width: 54px; height: 54px; background: rgba(0,0,0,0.65); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .play-triangle { width: 0; height: 0; border-style: solid; border-width: 11px 0 11px 20px; border-color: transparent transparent transparent #fff; margin-left: 4px; }
+    .duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: #fff; font-size: 12px; font-weight: 500; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.3px; }
+    .live-badge { position: absolute; bottom: 8px; right: 8px; background: #FF0000; color: #fff; font-size: 11px; font-weight: 600; padding: 3px 6px; border-radius: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .progress-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: #FF0000; border-radius: 0; }
+
+    .video-info { display: flex; gap: 12px; padding: 12px 12px 4px 12px; }
+    .channel-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 600; }
+    .video-meta { flex: 1; min-width: 0; }
+    .video-title { font-size: 14px; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #0f0f0f; margin-bottom: 4px; }
+    .video-channel-row { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #606060; line-height: 1.4; }
+    .verified-icon { display: inline-flex; align-items: center; }
+    .verified-icon svg { width: 14px; height: 14px; fill: #606060; }
+    .video-stats { font-size: 12px; color: #606060; line-height: 1.4; }
+    .dot-sep { margin: 0 4px; }
+    .video-actions { display: flex; gap: 6px; margin-top: 6px; }
+
+    .like-btn, .sub-btn { border: none; font-size: 12px; font-weight: 500; cursor: pointer; padding: 5px 12px; border-radius: 18px; display: inline-flex; align-items: center; gap: 5px; transition: background 0.15s; }
+    .like-btn { background: #f2f2f2; color: #0f0f0f; }
+    .like-btn:hover { background: #e5e5e5; }
+    .like-btn.liked { background: #def1fd; color: #065fd4; }
+    .sub-btn { background: #0f0f0f; color: #fff; }
+    .sub-btn:hover { background: #272727; }
+    .sub-btn.subscribed { background: #f2f2f2; color: #606060; }
+
+    .shorts-section { padding: 0 0 4px 0; background: #fff; margin-top: 8px; border-top: 4px solid #f2f2f2; border-bottom: 4px solid #f2f2f2; }
+    .shorts-header { display: flex; align-items: center; gap: 8px; padding: 16px 12px 12px 12px; }
+    .shorts-logo { display: flex; align-items: center; justify-content: center; width: 22px; height: 28px; background: #FF0000; border-radius: 5px; position: relative; }
+    .shorts-logo::after { content: ''; display: block; width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 8px; border-color: transparent transparent transparent #fff; margin-left: 1px; }
+    .shorts-title { font-size: 18px; font-weight: 700; color: #0f0f0f; }
+    .shorts-row { display: flex; gap: 8px; overflow-x: auto; padding: 0 12px 12px 12px; -ms-overflow-style: none; scrollbar-width: none; }
+    .shorts-row::-webkit-scrollbar { display: none; }
+    .short-card { flex-shrink: 0; width: 150px; cursor: pointer; border-radius: 12px; overflow: hidden; position: relative; }
+    .short-thumb { width: 150px; height: 267px; position: relative; overflow: hidden; }
+    .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 10px; background: linear-gradient(transparent, rgba(0,0,0,0.75)); }
+    .short-title { font-size: 13px; font-weight: 500; color: #fff; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .short-views { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .short-play-icon { display: inline-flex; }
+    .short-play-icon svg { width: 14px; height: 14px; fill: #fff; }
+
+    .no-results { text-align: center; padding: 60px 16px; color: #606060; }
+    .no-results svg { fill: #ccc; }
+    .no-results p { font-size: 14px; margin-top: 12px; color: #606060; }
+
+    .more-btn { display: flex; align-items: center; justify-content: center; padding: 10px; cursor: pointer; }
+    .more-btn svg { width: 20px; height: 20px; fill: #606060; }
+
+    @media (min-width: 500px) {
+      .thumbnail { border-radius: 12px; margin: 0 12px; width: calc(100% - 24px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-row">
+      <div class="logo-group">
+        <div class="yt-logo"></div>
+        <span class="logo-text">StreamTV</span>
+        <span class="sdk-badge">SDK v1</span>
+      </div>
+      <div class="search-area">
+        <div class="search-container">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search StreamTV" data-testid="input-search" />
+          <button class="search-btn" onclick="doSearch()" data-testid="button-search">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </button>
+        </div>
+        <button class="voice-btn" data-testid="button-voice">
+          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bridge-bar">
+    <button class="bridge-btn" onclick="handleAuth()" id="authBtn" data-testid="button-auth">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      Sign In
+    </button>
+    <button class="bridge-btn" onclick="handleNotify()" id="notifBtn" data-testid="button-notify">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      Enable Alerts
+    </button>
+    <span class="bridge-status" id="bridgeStatus">SDK: initializing</span>
+  </div>
+
+  <div class="chips" id="chipBar">
+    <button class="chip active" onclick="filterCategory(this, 'all')" data-testid="chip-all">All</button>
+    <button class="chip" onclick="filterCategory(this, 'music')" data-testid="chip-music">Music</button>
+    <button class="chip" onclick="filterCategory(this, 'gaming')" data-testid="chip-gaming">Gaming</button>
+    <button class="chip" onclick="filterCategory(this, 'live')" data-testid="chip-live">Live</button>
+    <button class="chip" onclick="filterCategory(this, 'news')" data-testid="chip-news">News</button>
+    <button class="chip" onclick="filterCategory(this, 'sports')" data-testid="chip-sports">Sports</button>
+    <button class="chip" onclick="filterCategory(this, 'podcasts')" data-testid="chip-podcasts">Podcasts</button>
+    <button class="chip" onclick="filterCategory(this, 'recent')" data-testid="chip-recent">Recently uploaded</button>
+  </div>
+
+  <div class="content" id="mainContent"></div>
+
+  <script src="/sdk/v1.js"></script>
+  <script>
+    var authed = false;
+    var likedVideos = {};
+    var subscribedChannels = {};
+    var currentCategory = "all";
+    var searchQuery = "";
+
+    var CHANNELS = [
+      { name: "TechVault", avatar: "T", color: "#2979ff", verified: true },
+      { name: "GamersHQ", avatar: "G", color: "#651fff", verified: true },
+      { name: "DailyBeats", avatar: "D", color: "#d500f9", verified: true },
+      { name: "WorldNews24", avatar: "W", color: "#c51162", verified: true },
+      { name: "SportsCentral", avatar: "S", color: "#00c853", verified: true },
+      { name: "ChefMaster", avatar: "C", color: "#ff6d00", verified: false },
+      { name: "CozyGaming", avatar: "CG", color: "#6d4c41", verified: false },
+      { name: "IndieTunes", avatar: "I", color: "#00bfa5", verified: false },
+      { name: "BreakingNow", avatar: "B", color: "#ff0000", verified: true },
+      { name: "FitLife360", avatar: "F", color: "#ffab00", verified: false },
+      { name: "PodcastDaily", avatar: "P", color: "#795548", verified: true }
+    ];
+
+    var VIDEOS = [
+      { id: 1, title: "Building a Full-Stack App in 60 Minutes - Complete Tutorial", channel: 0, category: "tech", views: "1.2M", time: "2 days ago", duration: "58:23", thumb: "linear-gradient(135deg, #0d47a1, #1565c0, #42a5f5)", live: false, progress: 45 },
+      { id: 2, title: "Top 10 Indie Games You Missed This Year", channel: 1, category: "gaming", views: "845K", time: "5 hours ago", duration: "22:14", thumb: "linear-gradient(135deg, #4a148c, #7b1fa2, #ce93d8)", live: false, progress: 0 },
+      { id: 3, title: "Lo-fi Beats to Study and Relax To - 24/7 Live Stream", channel: 2, category: "music", views: "3.4M", time: "Streaming now", duration: "", thumb: "linear-gradient(135deg, #880e4f, #c2185b, #f48fb1)", live: true, progress: 0 },
+      { id: 4, title: "Global Markets React to New Trade Policy - Full Analysis", channel: 3, category: "news", views: "567K", time: "1 hour ago", duration: "14:07", thumb: "linear-gradient(135deg, #b71c1c, #e53935, #ef9a9a)", live: false, progress: 72 },
+      { id: 5, title: "Champions League Semi-Final Highlights | Best Goals", channel: 4, category: "sports", views: "2.1M", time: "12 hours ago", duration: "18:42", thumb: "linear-gradient(135deg, #1b5e20, #388e3c, #81c784)", live: false, progress: 0 },
+      { id: 6, title: "Perfect Homemade Ramen from Scratch - Japanese Recipe", channel: 5, category: "cooking", views: "912K", time: "3 days ago", duration: "25:33", thumb: "linear-gradient(135deg, #e65100, #f57c00, #ffcc80)", live: false, progress: 15 },
+      { id: 7, title: "Elden Ring DLC Blind Playthrough Part 1 - Shadow of the Erdtree", channel: 6, category: "gaming", views: "423K", time: "1 day ago", duration: "1:42:08", thumb: "linear-gradient(135deg, #3e2723, #5d4037, #a1887f)", live: false, progress: 0 },
+      { id: 8, title: "New Album Reaction and Full Breakdown", channel: 7, category: "music", views: "178K", time: "6 hours ago", duration: "31:56", thumb: "linear-gradient(135deg, #004d40, #00796b, #80cbc4)", live: false, progress: 0 },
+      { id: 9, title: "Breaking: Major Weather Event - Live Coverage", channel: 8, category: "news", views: "1.5M", time: "Live now", duration: "", thumb: "linear-gradient(135deg, #d50000, #ff1744, #ff8a80)", live: true, progress: 0 },
+      { id: 10, title: "30-Minute Full Body HIIT Workout - No Equipment", channel: 9, category: "sports", views: "2.8M", time: "1 week ago", duration: "32:15", thumb: "linear-gradient(135deg, #f57f17, #fbc02d, #fff176)", live: false, progress: 88 },
+      { id: 11, title: "Mechanical Keyboard Sound Comparison - 50 Switches Tested", channel: 0, category: "tech", views: "634K", time: "4 days ago", duration: "16:44", thumb: "linear-gradient(135deg, #0d47a1, #1976d2, #64b5f6)", live: false, progress: 0 },
+      { id: 12, title: "5 Easy Pasta Recipes for Complete Beginners", channel: 5, category: "cooking", views: "1.7M", time: "2 weeks ago", duration: "19:28", thumb: "linear-gradient(135deg, #bf360c, #e64a19, #ff8a65)", live: false, progress: 100 },
+      { id: 13, title: "NBA Playoff Game 7 Full Highlights - What a Finish!", channel: 4, category: "sports", views: "4.2M", time: "3 days ago", duration: "12:55", thumb: "linear-gradient(135deg, #33691e, #558b2f, #aed581)", live: false, progress: 0 },
+      { id: 14, title: "Minecraft Mega Build Timelapse - Medieval Castle", channel: 6, category: "gaming", views: "1.1M", time: "1 week ago", duration: "8:33", thumb: "linear-gradient(135deg, #4e342e, #6d4c41, #bcaaa4)", live: false, progress: 30 },
+      { id: 15, title: "AI Revolution: What Every Developer Needs to Know in 2025", channel: 0, category: "tech", views: "2.3M", time: "5 days ago", duration: "45:12", thumb: "linear-gradient(135deg, #1565c0, #1e88e5, #90caf9)", live: false, progress: 0 },
+      { id: 16, title: "Weekly Tech Podcast #142 - Apple Vision Pro Review", channel: 10, category: "podcasts", views: "389K", time: "2 days ago", duration: "1:12:45", thumb: "linear-gradient(135deg, #4e342e, #795548, #d7ccc8)", live: false, progress: 0 },
+      { id: 17, title: "True Crime Deep Dive - The Unsolved Case", channel: 10, category: "podcasts", views: "1.8M", time: "1 week ago", duration: "52:18", thumb: "linear-gradient(135deg, #263238, #455a64, #90a4ae)", live: false, progress: 0 }
+    ];
+
+    var SHORTS = [
+      { title: "Impossible basketball trick shot", views: "14M", thumb: "linear-gradient(135deg, #1b5e20, #4caf50)" },
+      { title: "This guitar riff is absolutely insane", views: "8.2M", thumb: "linear-gradient(135deg, #4a148c, #9c27b0)" },
+      { title: "Satisfying cake decorating ASMR", views: "22M", thumb: "linear-gradient(135deg, #e65100, #ff9800)" },
+      { title: "Cat discovers snow for the first time", views: "31M", thumb: "linear-gradient(135deg, #0d47a1, #2196f3)" },
+      { title: "Street food in Tokyo at midnight", views: "5.6M", thumb: "linear-gradient(135deg, #b71c1c, #f44336)" },
+      { title: "How to solve a Rubik's cube in 10 seconds", views: "9.1M", thumb: "linear-gradient(135deg, #00695c, #26a69a)" },
+      { title: "Mind-blowing science experiment", views: "18M", thumb: "linear-gradient(135deg, #283593, #5c6bc0)" },
+      { title: "The most beautiful sunset ever filmed", views: "7.4M", thumb: "linear-gradient(135deg, #e65100, #ff5722, #ff9800)" }
+    ];
+
+    function getFilteredVideos() {
+      var vids = VIDEOS;
+      if (currentCategory !== "all") {
+        if (currentCategory === "live") {
+          vids = vids.filter(function(v) { return v.live; });
+        } else if (currentCategory === "recent") {
+          vids = vids.filter(function(v) {
+            return v.time.indexOf("hour") !== -1 || v.time.indexOf("day") !== -1 || v.time.indexOf("now") !== -1;
+          });
+        } else {
+          vids = vids.filter(function(v) { return v.category === currentCategory; });
+        }
+      }
+      if (searchQuery) {
+        var q = searchQuery.toLowerCase();
+        vids = vids.filter(function(v) {
+          return v.title.toLowerCase().indexOf(q) !== -1 ||
+                 CHANNELS[v.channel].name.toLowerCase().indexOf(q) !== -1 ||
+                 v.category.toLowerCase().indexOf(q) !== -1;
+        });
+      }
+      return vids;
+    }
+
+    function renderVideoCard(v) {
+      var ch = CHANNELS[v.channel];
+      var isLiked = likedVideos[v.id];
+      var isSub = subscribedChannels[v.channel];
+      var progressHtml = v.progress > 0 && !v.live ? '<div class="progress-bar" style="width:' + v.progress + '%"></div>' : '';
+
+      return '<div class="video-card" data-testid="video-card-' + v.id + '">' +
+        '<div class="thumbnail">' +
+          '<div class="thumbnail-bg" style="background:' + v.thumb + '"></div>' +
+          '<div class="play-overlay"><div class="play-circle"><div class="play-triangle"></div></div></div>' +
+          (v.live ? '<span class="live-badge">LIVE</span>' :
+           v.duration ? '<span class="duration">' + v.duration + '</span>' : '') +
+          progressHtml +
+        '</div>' +
+        '<div class="video-info">' +
+          '<div class="channel-avatar" style="background:' + ch.color + '">' + ch.avatar + '</div>' +
+          '<div class="video-meta">' +
+            '<div class="video-title">' + v.title + '</div>' +
+            '<div class="video-channel-row">' +
+              '<span>' + ch.name + '</span>' +
+              (ch.verified ? '<span class="verified-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></span>' : '') +
+            '</div>' +
+            '<div class="video-stats">' + v.views + ' views<span class="dot-sep">&middot;</span>' + v.time + '</div>' +
+            (authed ? '<div class="video-actions">' +
+              '<button class="like-btn' + (isLiked ? ' liked' : '') + '" onclick="event.stopPropagation();toggleLike(' + v.id + ')" data-testid="button-like-' + v.id + '">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>' +
+                (isLiked ? ' Liked' : ' Like') +
+              '</button>' +
+              '<button class="sub-btn' + (isSub ? ' subscribed' : '') + '" onclick="event.stopPropagation();toggleSub(' + v.channel + ')" data-testid="button-sub-' + v.channel + '">' +
+                (isSub ? 'Subscribed' : 'Subscribe') +
+              '</button>' +
+            '</div>' : '') +
+          '</div>' +
+          '<div class="more-btn"><svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function renderShorts() {
+      return '<div class="shorts-section">' +
+        '<div class="shorts-header">' +
+          '<div class="shorts-logo"></div>' +
+          '<span class="shorts-title">Shorts</span>' +
+        '</div>' +
+        '<div class="shorts-row">' +
+        SHORTS.map(function(s, i) {
+          return '<div class="short-card" data-testid="short-card-' + i + '">' +
+            '<div class="short-thumb" style="background:' + s.thumb + '">' +
+              '<div class="short-overlay">' +
+                '<div class="short-title">' + s.title + '</div>' +
+                '<div class="short-views">' +
+                  '<span class="short-play-icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>' +
+                  s.views + ' views' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join("") +
+        '</div>' +
+      '</div>';
+    }
+
+    function render() {
+      var vids = getFilteredVideos();
+      var html = "";
+
+      if (searchQuery && vids.length === 0) {
+        html = '<div class="no-results">' +
+          '<svg width="64" height="64" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>' +
+          '<p>No results found for "' + searchQuery + '"</p>' +
+          '<p style="font-size:12px;margin-top:4px;color:#909090">Try different keywords or remove search filters</p>' +
+        '</div>';
+      } else {
+        if (!searchQuery && currentCategory === "all") {
+          html += '<div class="section-header">' +
+            '<div class="section-icon">&#128293;</div>' +
+            '<span class="section-title">Trending</span>' +
+            '<span class="section-subtitle">See more</span>' +
+          '</div>';
+          var trending = vids.filter(function(v) { return v.live || parseInt(v.views) >= 2; }).slice(0, 3);
+          html += '<div class="video-feed">' + trending.map(renderVideoCard).join("") + '</div>';
+
+          html += renderShorts();
+
+          html += '<div class="section-header">' +
+            '<span class="section-title">Recommended</span>' +
+          '</div>';
+        }
+        html += '<div class="video-feed">' + vids.map(renderVideoCard).join("") + '</div>';
+      }
+
+      document.getElementById("mainContent").innerHTML = html;
+    }
+
+    function filterCategory(el, cat) {
+      document.querySelectorAll(".chip").forEach(function(c) { c.classList.remove("active"); });
+      el.classList.add("active");
+      currentCategory = cat;
+      searchQuery = "";
+      document.getElementById("searchInput").value = "";
+      render();
+    }
+
+    function doSearch() {
+      searchQuery = document.getElementById("searchInput").value.trim();
+      if (searchQuery) {
+        document.querySelectorAll(".chip").forEach(function(c) { c.classList.remove("active"); });
+        document.querySelector('.chip[onclick*="all"]').classList.add("active");
+        currentCategory = "all";
+      }
+      render();
+    }
+
+    document.getElementById("searchInput").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") doSearch();
+    });
+
+    function toggleLike(videoId) {
+      if (!authed) return;
+      likedVideos[videoId] = !likedVideos[videoId];
+      render();
+    }
+
+    function toggleSub(channelIdx) {
+      if (!authed) return;
+      subscribedChannels[channelIdx] = !subscribedChannels[channelIdx];
+      render();
+    }
+
+    function handleAuth() {
+      var btn = document.getElementById("authBtn");
+      btn.disabled = true;
+      document.getElementById("bridgeStatus").textContent = "SDK: requesting auth...";
+
+      MiniApp.requestAuthCode()
+        .then(function(code) {
+          authed = true;
+          btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Signed In';
+          btn.className = "bridge-btn done";
+          document.getElementById("bridgeStatus").textContent = "SDK: authenticated";
+          render();
+        })
+        .catch(function(err) {
+          document.getElementById("bridgeStatus").textContent = "Auth: " + err.message;
+          btn.disabled = false;
+        });
+    }
+
+    function handleNotify() {
+      var btn = document.getElementById("notifBtn");
+      btn.disabled = true;
+      document.getElementById("bridgeStatus").textContent = "SDK: sending notification...";
+
+      MiniApp.sendNotification({
+        title: "New Upload: TechVault",
+        body: "AI Revolution: What Developers Need to Know - Watch the latest from TechVault now!",
+        data: { videoId: 15, channel: "TechVault" }
+      }).then(function() {
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg> Alerts On';
+        btn.className = "bridge-btn done";
+        document.getElementById("bridgeStatus").textContent = "SDK: alerts enabled";
+      }).catch(function(err) {
+        document.getElementById("bridgeStatus").textContent = "Notify: " + err.message;
+        btn.disabled = false;
+      });
+    }
+
+    MiniApp.on("error", function(msg) {
+      document.getElementById("bridgeStatus").textContent = "Error: " + (msg.message || msg.code);
+    });
+
+    render();
+    MiniApp.init().then(function() {
+      document.getElementById("bridgeStatus").textContent = "SDK: connected";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "id": "parking",
+  "name": "SpotHero",
+  "description": "Find available parking near you. Compare rates, check availability, and navigate to open spots.",
+  "icon": "SpotHeroIcon",
+  "color": "#1A73E8",
+  "category": "parking",
+  "entryUrl": "/mini-apps/parking.html",
+  "permissions": ["location", "identity"],
+  "allowedOrigins": ["*"],
+  "version": "1.4.2",
+  "developer": "SpotHero Parking",
+  "intents": ["FIND_PARKING", "RESERVE_SPOT", "CHECK_RATES"],
+  "sdk": "/sdk.js"
+}

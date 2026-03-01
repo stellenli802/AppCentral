@@ -1,0 +1,15 @@
+{
+  "id": "megamart",
+  "name": "Bullseye Mart",
+  "description": "Shop top deals across electronics, home, clothing, and grocery. Find stores near you and get order updates.",
+  "icon": "BullseyeMartIcon",
+  "color": "#CC0000",
+  "category": "shopping",
+  "entryUrl": "/mini-apps/megamart.html",
+  "permissions": ["location", "identity"],
+  "allowedOrigins": ["*"],
+  "version": "3.5.0",
+  "developer": "Bullseye Mart Digital",
+  "intents": ["SHOP_PRODUCTS", "FIND_DEALS", "TRACK_ORDER"],
+  "sdk": "/sdk.js"
+}

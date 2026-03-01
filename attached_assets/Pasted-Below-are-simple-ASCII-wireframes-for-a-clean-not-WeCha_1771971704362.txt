@@ -1,0 +1,163 @@
+Below are simple ASCII wireframes for a clean, not-WeChat “App Central / Mini-app Hub” with 6 core screens. (These are deliberately rough so you can translate to Figma/Expo/Next quickly.)
+
+1) Home Hub (Dashboard)
+┌──────────────────────────────────────────┐
+│  9:41                            (◉)     │
+│  Good evening, Alex                      │
+│  What do you want to do?         🔔 ⚙︎     │
+│                                          │
+│  [ Search mini-apps, places, actions… ]  │
+│                                          │
+│  SMART ACTIONS                            │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+│  │  🚍 2 min │ │  ✈ Check │ │  🅿 12    │  │
+│  │  Bus A   │ │  in open │ │  spots   │  │
+│  └──────────┘ └──────────┘ └──────────┘  │
+│                                          │
+│  NEARBY                                   │
+│  ┌──────────────┐ ┌──────────────┐       │
+│  │ Starbucks     │ │ City Parking  │       │
+│  │ Order ahead   │ │ 0.4 mi        │       │
+│  └──────────────┘ └──────────────┘       │
+│  ┌──────────────┐ ┌──────────────┐       │
+│  │ Transit Now   │ │ Campus Map    │       │
+│  │ Arrivals: 3   │ │ Building A    │       │
+│  └──────────────┘ └──────────────┘       │
+│                                          │
+│  FAVORITES                                │
+│  [ 🚌 Transit ] [ 🅿 Parking ] [ ✈ Travel ]│
+│                                          │
+│  CATEGORIES                               │
+│  ( Transit ) ( Parking ) ( Travel ) (...) │
+│                                          │
+│  ⌂ Home     ⌕ Search     ✦ My Apps        │
+└──────────────────────────────────────────┘
+2) Search (Global search for mini-apps + actions)
+┌──────────────────────────────────────────┐
+│  ← Search                                 │
+│  [ 🔎  Search mini-apps or actions... ]   │
+│                                          │
+│  SUGGESTED                                │
+│  • "bus near me"                          │
+│  • "parking downtown"                     │
+│  • "flight check-in"                      │
+│                                          │
+│  RESULTS                                  │
+│  ┌──────────────────────────────────────┐ │
+│  │ 🚍 Transit Now      Arrivals + alerts │ │
+│  │ Category: Transit                     │ │
+│  └──────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────┐ │
+│  │ 🅿 ParkFinder       Nearby options    │ │
+│  │ Category: Parking                     │ │
+│  └──────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────┐ │
+│  │ ✈ Travel Hub       Check-in shortcuts │ │
+│  │ Category: Travel                      │ │
+│  └──────────────────────────────────────┘ │
+│                                          │
+│  ⌂ Home     ⌕ Search     ✦ My Apps        │
+└──────────────────────────────────────────┘
+3) Catalog / Explore (Browse by category)
+┌──────────────────────────────────────────┐
+│  Explore                                  │
+│  [ 🔎 Search mini-apps… ]          Filter │
+│                                          │
+│  (All) (Transit) (Parking) (Travel) (...) │
+│                                          │
+│  TRENDING                                 │
+│  ┌──────────────┐ ┌──────────────┐       │
+│  │ ✈ Travel Hub  │ │ 🅿 ParkFinder │       │
+│  │ Shortcuts     │ │ Live nearby  │       │
+│  └──────────────┘ └──────────────┘       │
+│                                          │
+│  ALL APPS                                 │
+│  ┌──────────────┐ ┌──────────────┐       │
+│  │ 🚍 Transit Now │ │ ☕ Order Now  │       │
+│  └──────────────┘ └──────────────┘       │
+│  ┌──────────────┐ ┌──────────────┐       │
+│  │ 🗺 Campus Map  │ │ 🔐 Auth Tools │       │
+│  └──────────────┘ └──────────────┘       │
+│                                          │
+│  ⌂ Home     ⌕ Search     ✦ My Apps        │
+└──────────────────────────────────────────┘
+4) Mini-App Runner (Embedded mini-app)
+┌──────────────────────────────────────────┐
+│  ←  Transit Now                      ⋯    │
+│  (Favorite ☆) (Open ↗) (Report ⚑)         │
+│──────────────────────────────────────────│
+│                                          │
+│   ┌──────────────────────────────────┐   │
+│   │                                  │   │
+│   │   [ Mini-App content (iframe) ]   │   │
+│   │                                  │   │
+│   │   Arrivals:                       │   │
+│   │    • Route A - 2 min              │   │
+│   │    • Route B - 6 min              │   │
+│   │                                  │   │
+│   └──────────────────────────────────┘   │
+│                                          │
+│  (Optional) Permissions chip: 📍Location  │
+└──────────────────────────────────────────┘
+5) My Apps (Workspace: recents + pinned + manage)
+┌──────────────────────────────────────────┐
+│  My Apps                                  │
+│  Workspace                                │
+│                                          │
+│  RECENT                                   │
+│  ┌──────────────────────────────────────┐ │
+│  │ 🚍 Transit Now                2 hrs   │ │
+│  └──────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────┐ │
+│  │ 🅿 ParkFinder                 yesterday│ │
+│  └──────────────────────────────────────┘ │
+│                                          │
+│  PINNED                                   │
+│  [ 🚍 Transit ] [ 🅿 Parking ] [ ✈ Travel ]│
+│                                          │
+│  MANAGE                                   │
+│  • Permissions                            │
+│  • Notifications                          │
+│  • Developer mode                         │
+│                                          │
+│  ⌂ Home     ⌕ Search     ✦ My Apps        │
+└──────────────────────────────────────────┘
+6) Permissions + Trust Screen (Platform feel; helps judges)
+┌──────────────────────────────────────────┐
+│  ← Permissions                            │
+│  Manage what mini-apps can access         │
+│                                          │
+│  LOCATION                                 │
+│  ┌──────────────────────────────────────┐ │
+│  │ Transit Now                [ ON  ]    │ │
+│  │ ParkFinder                 [ ON  ]    │ │
+│  │ Travel Hub                 [ OFF ]    │ │
+│  └──────────────────────────────────────┘ │
+│                                          │
+│  NOTIFICATIONS                            │
+│  ┌──────────────────────────────────────┐ │
+│  │ Transit Now                [ ON  ]    │ │
+│  │ ParkFinder                 [ OFF ]    │ │
+│  └──────────────────────────────────────┘ │
+│                                          │
+│  SECURITY                                 │
+│  • Only verified mini-app origins allowed │
+│  • Report a mini-app                      │
+└──────────────────────────────────────────┘
+Optional 7) Add Mini-App (Developer mode demo)
+
+If you want to impress judges, include a screen like this:
+
+┌──────────────────────────────────────────┐
+│  Add Mini-App (Dev Mode)                  │
+│                                          │
+│  Name         [____________________]     │
+│  Entry URL     [____________________]     │
+│  Allowed Origin[____________________]     │
+│  Category      [ Transit ▾ ]             │
+│  Permissions   [ ] Location  [ ] Notify  │
+│                                          │
+│  [ Validate + Add Mini-App ]             │
+│                                          │
+│  Notes: Only HTTPS + verified origins     │
+└──────────────────────────────────────────┘

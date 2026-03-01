@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Hub</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+    .header { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 20px; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .sdk-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; margin-left: 6px; letter-spacing: 0.5px; }
+    .auth-section { padding: 12px 16px; background: white; border-bottom: 1px solid #e2e8f0; }
+    .auth-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; display: flex; align-items: center; gap: 12px; transition: all 0.3s; }
+    .auth-card.connected { border-color: #a78bfa; background: #f5f3ff; }
+    .auth-icon { width: 40px; height: 40px; border-radius: 10px; background: #ede9fe; display: flex; align-items: center; justify-content: center; }
+    .auth-info { flex: 1; }
+    .auth-info h3 { font-size: 13px; font-weight: 600; }
+    .auth-info p { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+    .auth-btn { background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 500; }
+    .auth-btn:hover { background: #7c3aed; }
+    .auth-btn.done { background: #22c55e; pointer-events: none; }
+    .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .content { padding: 16px; }
+    .section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 12px; }
+    .search-section { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .search-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .search-input { flex: 1; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; color: #1e293b; }
+    .search-input::placeholder { color: #94a3b8; }
+    .search-btn { background: #8b5cf6; color: white; border: none; padding: 8px 20px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .search-btn:hover { background: #7c3aed; }
+    .search-result { display: none; background: #f5f3ff; border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 12px; color: #6d28d9; }
+    .search-result.visible { display: block; }
+    .flight-card { background: white; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
+    .flight-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; }
+    .flight-airline { font-size: 13px; font-weight: 600; }
+    .flight-number { font-size: 12px; color: #8b5cf6; font-weight: 600; }
+    .flight-status { padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .flight-status.on-time { background: #dcfce7; color: #15803d; }
+    .flight-status.boarding { background: #fef3c7; color: #92400e; }
+    .flight-status.delayed { background: #fef2f2; color: #dc2626; }
+    .flight-route { padding: 16px; display: flex; align-items: center; gap: 12px; }
+    .flight-point { text-align: center; }
+    .flight-code { font-size: 22px; font-weight: 700; }
+    .flight-city { font-size: 11px; color: #94a3b8; }
+    .flight-time { font-size: 13px; font-weight: 600; margin-top: 4px; }
+    .flight-line { flex: 1; position: relative; height: 2px; background: #e2e8f0; }
+    .flight-line::before { content: ""; position: absolute; left: 0; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6; }
+    .flight-line::after { content: ""; position: absolute; right: 0; top: -3px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid #8b5cf6; background: white; }
+    .flight-plane { position: absolute; left: 50%; top: -8px; transform: translateX(-50%); font-size: 14px; }
+    .flight-footer { padding: 10px 16px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+    .flight-gate { font-size: 12px; color: #64748b; }
+    .flight-gate strong { color: #1e293b; }
+    .checkin-btn { background: #8b5cf6; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500; }
+    .checkin-btn:hover { background: #7c3aed; }
+    .checkin-btn.checked { background: #22c55e; pointer-events: none; }
+    .pass-card { background: white; border: 2px dashed #a78bfa; border-radius: 10px; padding: 20px; text-align: center; margin-top: 16px; }
+    .pass-card h3 { font-size: 14px; font-weight: 600; color: #8b5cf6; }
+    .pass-card .barcode { margin: 16px auto; width: 200px; height: 50px; background: repeating-linear-gradient(90deg, #1e293b 0px, #1e293b 2px, transparent 2px, transparent 4px); border-radius: 4px; }
+    .pass-card p { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .flight-card { animation: slideUp 0.3s ease; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Travel Hub <span class="sdk-badge">SDK v1</span></h1>
+    <p>Check-in, boarding passes &amp; flight search</p>
+  </div>
+
+  <div class="auth-section">
+    <div class="auth-card" id="authCard">
+      <div class="auth-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="auth-info">
+        <h3 id="authTitle">Connect your account</h3>
+        <p id="authDesc">Sign in via host bridge to access bookings</p>
+      </div>
+      <button class="auth-btn" onclick="handleAuth()" id="authBtn">Connect</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="section-title">Search Flights</div>
+    <div class="search-section">
+      <div class="search-row">
+        <input class="search-input" id="fromInput" placeholder="From (e.g. SFO)" value="SFO" />
+        <input class="search-input" id="toInput" placeholder="To (e.g. JFK)" value="JFK" />
+      </div>
+      <button class="search-btn" onclick="searchFlights()">Search Flights</button>
+      <div class="search-result" id="searchResult"></div>
+    </div>
+
+    <div class="section-title">Upcoming Flights</div>
+    <div id="flights"></div>
+    <div id="passArea"></div>
+  </div>
+
+  <script src="/sdk/v1.js"></script>
+  <script>
+    var FLIGHTS = [
+      { airline: "SkyBridge Air", number: "SB 1042",
+        from: { code: "SFO", city: "San Francisco", time: "08:30 AM" },
+        to: { code: "JFK", city: "New York", time: "04:55 PM" },
+        status: "on-time", gate: "B22", seat: "14A" },
+      { airline: "Pacific Express", number: "PX 887",
+        from: { code: "JFK", city: "New York", time: "09:15 PM" },
+        to: { code: "LHR", city: "London", time: "09:30 AM" },
+        status: "boarding", gate: "D7", seat: "23F" },
+      { airline: "Atlantic Wings", number: "AW 203",
+        from: { code: "LHR", city: "London", time: "02:00 PM" },
+        to: { code: "CDG", city: "Paris", time: "04:15 PM" },
+        status: "delayed", gate: "C14", seat: "8B" },
+    ];
+
+    var checkedIn = {};
+
+    function renderFlights() {
+      document.getElementById("flights").innerHTML = FLIGHTS.map(function(f, i) {
+        return '<div class="flight-card">' +
+          '<div class="flight-header">' +
+            '<div><div class="flight-airline">' + f.airline + '</div><div class="flight-number">' + f.number + '</div></div>' +
+            '<div class="flight-status ' + f.status + '">' + f.status.replace("-"," ") + '</div>' +
+          '</div>' +
+          '<div class="flight-route">' +
+            '<div class="flight-point"><div class="flight-code">' + f.from.code + '</div><div class="flight-city">' + f.from.city + '</div><div class="flight-time">' + f.from.time + '</div></div>' +
+            '<div class="flight-line"><div class="flight-plane">&#9992;</div></div>' +
+            '<div class="flight-point"><div class="flight-code">' + f.to.code + '</div><div class="flight-city">' + f.to.city + '</div><div class="flight-time">' + f.to.time + '</div></div>' +
+          '</div>' +
+          '<div class="flight-footer">' +
+            '<div class="flight-gate">Gate <strong>' + f.gate + '</strong> &middot; Seat <strong>' + f.seat + '</strong></div>' +
+            '<button class="checkin-btn ' + (checkedIn[i] ? 'checked' : '') + '" onclick="checkIn(' + i + ')" ' + (checkedIn[i] ? 'disabled' : '') + '>' + (checkedIn[i] ? 'Checked In' : 'Check In') + '</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+    }
+
+    function checkIn(index) {
+      checkedIn[index] = true;
+      renderFlights();
+      var f = FLIGHTS[index];
+      document.getElementById("passArea").innerHTML =
+        '<div class="pass-card">' +
+          '<h3>Boarding Pass</h3>' +
+          '<p style="margin-top:8px;font-size:13px;color:#1e293b;font-weight:600">' + f.from.code + ' &rarr; ' + f.to.code + '</p>' +
+          '<p style="font-size:12px;color:#64748b">' + f.number + ' &middot; Gate ' + f.gate + ' &middot; Seat ' + f.seat + '</p>' +
+          '<div class="barcode"></div>' +
+          '<p>Scan this pass at the gate</p>' +
+        '</div>';
+    }
+
+    function searchFlights() {
+      var from = document.getElementById("fromInput").value.toUpperCase() || "SFO";
+      var to = document.getElementById("toInput").value.toUpperCase() || "JFK";
+      var result = document.getElementById("searchResult");
+      result.className = "search-result visible";
+      result.innerHTML = "<strong>Found 3 flights</strong> from " + from + " to " + to + "<br>" +
+        "&#9992; SkyBridge Air &mdash; $289 (direct, 5h 25m)<br>" +
+        "&#9992; Pacific Express &mdash; $312 (1 stop, 7h 10m)<br>" +
+        "&#9992; Atlantic Wings &mdash; $245 (1 stop, 8h 30m)";
+    }
+
+    function handleAuth() {
+      var btn = document.getElementById("authBtn");
+      btn.disabled = true;
+
+      MiniApp.requestAuthCode()
+        .then(function(code) {
+          document.getElementById("authCard").classList.add("connected");
+          document.getElementById("authTitle").textContent = "Connected";
+          document.getElementById("authDesc").textContent = "Authenticated via SDK";
+          btn.textContent = "Done";
+          btn.className = "auth-btn done";
+
+          setTimeout(function() {
+            MiniApp.sendNotification({
+              title: "Check-in Reminder: Flight AA 1234",
+              body: "Online check-in is now open for your flight AA 1234 (JFK \u2192 LAX). Departure: Tomorrow 8:30 AM.",
+              data: { flight: "AA 1234", route: "JFK \u2192 LAX", departure: "Tomorrow 8:30 AM" }
+            }).catch(function() {});
+          }, 2500);
+        })
+        .catch(function(err) {
+          document.getElementById("authDesc").textContent = err.message || "Permission denied";
+          document.getElementById("authDesc").style.color = "#dc2626";
+          btn.textContent = "Denied";
+          btn.style.background = "#ef4444";
+          btn.style.pointerEvents = "none";
+        });
+    }
+
+    renderFlights();
+    MiniApp.init();
+  </script>
+</body>
+</html>

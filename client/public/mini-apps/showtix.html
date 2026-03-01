@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TicketHub</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f0f0; color: #1a1a1a; -webkit-font-smoothing: antialiased; }
+
+    .header { background: #2B2B2B; color: white; padding: 14px 16px; position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-logo { display: flex; align-items: center; gap: 8px; }
+    .header-logo svg { width: 28px; height: 28px; color: #b388ff; }
+    .header h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; color: #fff; }
+    .header h1 span.accent { color: #b388ff; }
+    .sdk-badge { display: inline-block; background: rgba(65,0,153,0.3); color: #b388ff; padding: 2px 7px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; vertical-align: middle; margin-left: 6px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .header-icon-btn { background: rgba(255,255,255,0.1); border: none; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .header-icon-btn:hover { background: rgba(255,255,255,0.2); }
+
+    .bridge-bar { background: #2B2B2B; border-top: 1px solid #3a3a3a; padding: 8px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .bridge-btn { background: #410099; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 5px; transition: background 0.15s; }
+    .bridge-btn:hover { background: #350080; }
+    .bridge-btn.done { background: #22c55e; color: white; pointer-events: none; }
+    .bridge-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .bridge-status { font-size: 11px; color: #888; flex: 1; text-align: right; }
+
+    .location-bar { background: #1a3a1a; border-bottom: 1px solid #2a5a2a; padding: 8px 16px; font-size: 11px; color: #6ee76e; display: none; align-items: center; gap: 6px; }
+    .location-bar.visible { display: flex; }
+    .location-bar.error { background: #3a1a1a; border-color: #5a2a2a; color: #ef4444; }
+
+    .date-strip-wrapper { background: white; padding: 12px 0 12px 16px; border-bottom: 1px solid #e5e5e5; }
+    .date-strip { display: flex; gap: 8px; overflow-x: auto; padding-right: 16px; padding-bottom: 2px; scrollbar-width: none; }
+    .date-strip::-webkit-scrollbar { display: none; }
+    .date-item { min-width: 56px; text-align: center; padding: 8px 8px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; background: #f5f5f5; transition: all 0.15s; flex-shrink: 0; }
+    .date-item:hover { border-color: #410099; }
+    .date-item.active { background: #410099; color: #fff; border-color: #410099; }
+    .date-item .day-name { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.3px; }
+    .date-item.active .day-name { color: rgba(255,255,255,0.8); }
+    .date-item .day-num { font-size: 18px; font-weight: 800; margin-top: 2px; }
+    .date-item .month-label { font-size: 9px; font-weight: 500; color: #aaa; text-transform: uppercase; margin-top: 1px; }
+    .date-item.active .month-label { color: rgba(255,255,255,0.7); }
+
+    .theater-wrapper { background: white; padding: 10px 16px; border-bottom: 1px solid #e5e5e5; }
+    .theater-select-container { position: relative; }
+    .theater-select { width: 100%; padding: 10px 40px 10px 38px; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 13px; font-weight: 600; color: #1a1a1a; cursor: pointer; appearance: none; -webkit-appearance: none; }
+    .theater-select:focus { outline: none; border-color: #410099; box-shadow: 0 0 0 2px rgba(65,0,153,0.2); }
+    .theater-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #410099; pointer-events: none; }
+    .theater-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none; }
+
+    .content { padding: 16px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+    .section-title { font-size: 18px; font-weight: 800; color: #1a1a1a; letter-spacing: -0.3px; }
+    .section-link { font-size: 12px; font-weight: 600; color: #410099; text-decoration: none; cursor: pointer; white-space: nowrap; }
+
+    .movie-card { background: white; border-radius: 12px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .movie-top { display: flex; gap: 14px; padding: 14px; }
+    .movie-poster { width: 100px; height: 150px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: flex-start; font-size: 36px; color: white; font-weight: 800; position: relative; overflow: hidden; }
+    .movie-poster .poster-letter { position: absolute; bottom: 8px; left: 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); z-index: 2; font-size: 32px; }
+    .movie-poster::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60%; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); z-index: 1; }
+    .movie-info { flex: 1; min-width: 0; padding-top: 2px; }
+    .movie-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; color: #1a1a1a; line-height: 1.2; }
+    .movie-meta-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .mpaa-badge { display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid #666; border-radius: 3px; padding: 1px 5px; font-size: 10px; font-weight: 700; color: #555; letter-spacing: 0.3px; line-height: 1.3; }
+    .runtime-text { font-size: 12px; color: #888; font-weight: 500; }
+    .star-rating { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+    .star-icon { color: #410099; font-size: 14px; }
+    .star-score { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    .star-max { font-size: 11px; color: #999; font-weight: 500; }
+    .movie-genre { font-size: 12px; color: #888; font-weight: 500; margin-top: 2px; }
+
+    .showtimes-section { padding: 0 14px 14px; }
+    .showtimes-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .showtimes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .showtime-btn { padding: 8px 14px; border-radius: 8px; border: 2px solid #410099; background: transparent; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; color: #1a1a1a; text-align: center; min-width: 80px; }
+    .showtime-btn:hover { background: #f0e6ff; }
+    .showtime-btn.selected { background: #410099; color: #fff; border-color: #410099; }
+    .showtime-btn .format { display: block; font-size: 9px; font-weight: 600; color: #999; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .showtime-btn.selected .format { color: rgba(255,255,255,0.6); }
+    .showtime-btn .format.imax { color: #1a6dcc; font-weight: 800; }
+    .showtime-btn .format.dolby { color: #b01db0; font-weight: 800; }
+    .showtime-btn.selected .format.imax,
+    .showtime-btn.selected .format.dolby { color: rgba(255,255,255,0.7); }
+
+    .coming-soon-card { background: white; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
+    .cs-poster { width: 56px; height: 84px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: flex-start; color: white; font-weight: 800; font-size: 22px; position: relative; overflow: hidden; }
+    .cs-poster .cs-letter { position: absolute; bottom: 6px; left: 8px; text-shadow: 0 2px 6px rgba(0,0,0,0.5); z-index: 2; }
+    .cs-poster::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60%; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); z-index: 1; }
+    .cs-info { flex: 1; min-width: 0; }
+    .cs-title { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    .cs-date-badge { display: inline-block; background: #410099; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px; }
+    .cs-genre { font-size: 11px; color: #888; margin-top: 4px; font-weight: 500; }
+    .cs-notify-btn { background: none; border: 1px solid #ddd; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; color: #888; transition: all 0.15s; }
+    .cs-notify-btn:hover { border-color: #410099; color: #410099; }
+
+    .seat-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: flex-end; justify-content: center; }
+    .seat-modal.open { display: flex; }
+    .seat-panel { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 0; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .seat-panel-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 10px auto 0; }
+    .seat-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #eee; gap: 8px; }
+    .seat-panel-title { font-size: 16px; font-weight: 800; color: #1a1a1a; }
+    .seat-panel-subtitle { font-size: 12px; color: #888; font-weight: 500; }
+    .seat-panel-close { background: #f0f0f0; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #666; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .seat-panel-close:hover { background: #e0e0e0; }
+    .seat-panel-body { padding: 16px 20px 20px; }
+    .screen-label { text-align: center; font-size: 10px; color: #bbb; text-transform: uppercase; letter-spacing: 3px; font-weight: 700; margin-bottom: 6px; }
+    .screen-bar { height: 3px; background: linear-gradient(90deg, transparent 5%, #410099 30%, #410099 70%, transparent 95%); border-radius: 2px; margin: 0 20px 24px; }
+    .seat-grid { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 20px; }
+    .seat-row { display: flex; align-items: center; gap: 4px; }
+    .seat-row-label { width: 18px; font-size: 10px; font-weight: 700; color: #bbb; text-align: center; }
+    .seat { width: 28px; height: 28px; border-radius: 6px; border: 1.5px solid #d1d5db; background: white; cursor: pointer; transition: all 0.12s; font-size: 0; position: relative; }
+    .seat:hover:not(.taken) { border-color: #410099; background: #f0e6ff; }
+    .seat.taken { background: #e8e8e8; border-color: #ddd; cursor: not-allowed; }
+    .seat.taken::after { content: ''; position: absolute; inset: 4px; background: #ccc; border-radius: 3px; }
+    .seat.selected { background: #410099; border-color: #350080; }
+    .seat.vip { border-color: #c084fc; background: #faf5ff; }
+    .seat.vip:hover:not(.taken) { border-color: #a855f7; background: #f3e8ff; }
+    .seat.vip.selected { background: #a855f7; border-color: #9333ea; }
+    .seat-legend { display: flex; gap: 16px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .seat-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #888; font-weight: 500; }
+    .seat-legend-box { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid #d1d5db; }
+    .seat-legend-box.taken { background: #e8e8e8; position: relative; }
+    .seat-legend-box.taken::after { content: ''; position: absolute; inset: 3px; background: #ccc; border-radius: 2px; }
+    .seat-legend-box.sel { background: #410099; border-color: #350080; }
+    .seat-legend-box.vip { border-color: #c084fc; background: #faf5ff; }
+
+    .seat-summary { background: #fafafa; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid #eee; }
+    .seat-summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #555; }
+    .seat-summary-row:last-child { margin-bottom: 0; font-weight: 800; font-size: 16px; color: #1a1a1a; padding-top: 6px; border-top: 1px solid #eee; }
+    .book-btn { width: 100%; padding: 15px; border-radius: 10px; background: #410099; color: #fff; border: none; font-size: 15px; font-weight: 800; cursor: pointer; transition: background 0.15s; letter-spacing: -0.2px; }
+    .book-btn:hover { background: #350080; }
+    .book-btn:disabled { opacity: 0.4; cursor: not-allowed; background: #ddd; color: #999; }
+
+    .confirmation-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+    .confirmation-overlay.open { display: flex; }
+    .confirmation-card { background: white; border-radius: 20px; padding: 32px 24px; text-align: center; max-width: 340px; width: 100%; }
+    .confirm-check { width: 56px; height: 56px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .confirm-check svg { width: 28px; height: 28px; color: white; }
+    .confirm-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; color: #1a1a1a; }
+    .confirm-subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .confirm-qr { width: 120px; height: 120px; background: #f5f5f5; border: 2px dashed #ddd; border-radius: 12px; margin: 0 auto 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .confirm-qr svg { width: 48px; height: 48px; color: #ccc; margin-bottom: 4px; }
+    .confirm-qr-label { font-size: 9px; color: #bbb; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .confirm-details { background: #fafafa; border-radius: 12px; padding: 14px; margin-bottom: 20px; text-align: left; border: 1px solid #eee; }
+    .confirm-detail { font-size: 13px; color: #555; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+    .confirm-detail:last-child { margin-bottom: 0; }
+    .confirm-detail svg { width: 16px; height: 16px; color: #410099; flex-shrink: 0; margin-top: 1px; }
+    .confirm-detail strong { color: #1a1a1a; font-weight: 700; }
+    .confirm-close { width: 100%; padding: 14px; border-radius: 10px; background: #410099; color: #fff; border: none; font-size: 15px; font-weight: 800; cursor: pointer; transition: background 0.15s; }
+    .confirm-close:hover { background: #350080; }
+
+    .divider { height: 8px; background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4"/><path d="M2 14v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4"/><path d="M2 10a2 2 0 1 0 0 4"/><path d="M22 10a2 2 0 1 1 0 4"/></svg>
+      </div>
+      <h1><span class="accent">Ticket</span>Hub <span class="sdk-badge">SDK v1</span></h1>
+    </div>
+    <div class="header-right">
+      <button class="header-icon-btn" data-testid="button-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="bridge-bar">
+    <button class="bridge-btn" onclick="handleAuth()" id="authBtn" data-testid="button-auth">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Sign In
+    </button>
+    <button class="bridge-btn" onclick="handleLocation()" id="locBtn" data-testid="button-location">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Find Theaters
+    </button>
+    <span class="bridge-status" id="bridgeStatus">SDK: initializing</span>
+  </div>
+
+  <div class="location-bar" id="locationBar"></div>
+
+  <div class="date-strip-wrapper">
+    <div class="date-strip" id="dateStrip"></div>
+  </div>
+
+  <div class="theater-wrapper">
+    <div class="theater-select-container">
+      <svg class="theater-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <select class="theater-select" id="theaterSelect" data-testid="select-theater">
+        <option value="amc">AMC Cinema 16</option>
+        <option value="regal">Regal Multiplex</option>
+        <option value="cinemark">Cinemark Palace</option>
+      </select>
+      <svg class="theater-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="section-header">
+      <div class="section-title">Now Playing</div>
+      <span class="section-link">See All</span>
+    </div>
+    <div id="nowPlaying"></div>
+
+    <div class="section-header" style="margin-top: 8px;">
+      <div class="section-title">Coming Soon</div>
+      <span class="section-link">See All</span>
+    </div>
+    <div id="comingSoon"></div>
+  </div>
+
+  <div class="seat-modal" id="seatModal">
+    <div class="seat-panel">
+      <div class="seat-panel-handle"></div>
+      <div class="seat-panel-header">
+        <div>
+          <div class="seat-panel-title" id="seatPanelTitle">Select Seats</div>
+          <div class="seat-panel-subtitle" id="seatPanelSubtitle"></div>
+        </div>
+        <button class="seat-panel-close" onclick="closeSeatPicker()" data-testid="button-close-seats">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="seat-panel-body">
+        <div class="screen-label">Screen</div>
+        <div class="screen-bar"></div>
+        <div class="seat-grid" id="seatGrid"></div>
+        <div class="seat-legend">
+          <div class="seat-legend-item"><div class="seat-legend-box"></div> Available</div>
+          <div class="seat-legend-item"><div class="seat-legend-box taken"></div> Taken</div>
+          <div class="seat-legend-item"><div class="seat-legend-box sel"></div> Selected</div>
+          <div class="seat-legend-item"><div class="seat-legend-box vip"></div> VIP</div>
+        </div>
+        <div class="seat-summary" id="seatSummary"></div>
+        <button class="book-btn" id="bookBtn" onclick="handleBook()" disabled data-testid="button-book">Select seats to continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirmation-overlay" id="confirmOverlay">
+    <div class="confirmation-card">
+      <div class="confirm-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="confirm-title">Booking Confirmed!</div>
+      <div class="confirm-subtitle">Your tickets are ready</div>
+      <div class="confirm-qr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/></svg>
+        <span class="confirm-qr-label">Scan at theater</span>
+      </div>
+      <div class="confirm-details">
+        <div class="confirm-detail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+          <span id="confirmMovie"></span>
+        </div>
+        <div class="confirm-detail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span id="confirmTime"></span>
+        </div>
+        <div class="confirm-detail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4"/><path d="M2 14v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4"/><path d="M2 10a2 2 0 1 0 0 4"/><path d="M22 10a2 2 0 1 1 0 4"/></svg>
+          <span id="confirmSeats"></span>
+        </div>
+      </div>
+      <button class="confirm-close" onclick="closeConfirmation()" data-testid="button-confirm-done">Done</button>
+    </div>
+  </div>
+
+  <script src="/sdk/v1.js"></script>
+  <script>
+    var authed = false;
+    var selectedSeats = [];
+    var currentMovie = null;
+    var currentShowtime = null;
+    var TICKET_PRICE = 14.50;
+    var VIP_PRICE = 22.00;
+
+    var MOVIES = [
+      { id: 1, title: "Midnight Horizon", rating: "PG-13", score: 8.4, runtime: "2h 18m", genre: "Sci-Fi / Thriller", color: "#1e3a5f", gradient: "linear-gradient(135deg, #1e3a5f 0%, #0f1b2d 60%, #1a0a2e 100%)",
+        showtimes: [
+          { time: "1:30 PM", format: "IMAX" }, { time: "4:15 PM", format: "Standard" },
+          { time: "7:00 PM", format: "IMAX" }, { time: "9:45 PM", format: "Dolby" }
+        ] },
+      { id: 2, title: "The Last Garden", rating: "PG", score: 7.9, runtime: "1h 52m", genre: "Drama / Romance", color: "#4a7c59", gradient: "linear-gradient(135deg, #4a7c59 0%, #2d4a35 60%, #1a2e1f 100%)",
+        showtimes: [
+          { time: "12:45 PM", format: "Standard" }, { time: "3:30 PM", format: "Standard" },
+          { time: "6:15 PM", format: "Standard" }, { time: "8:50 PM", format: "Dolby" }
+        ] },
+      { id: 3, title: "Velocity Rush", rating: "R", score: 7.2, runtime: "2h 05m", genre: "Action / Adventure", color: "#c1121f", gradient: "linear-gradient(135deg, #c1121f 0%, #7a0c14 60%, #2d0508 100%)",
+        showtimes: [
+          { time: "2:00 PM", format: "IMAX" }, { time: "5:30 PM", format: "Standard" },
+          { time: "8:00 PM", format: "IMAX" }, { time: "10:30 PM", format: "Standard" }
+        ] },
+      { id: 4, title: "Echoes of Tomorrow", rating: "PG-13", score: 8.1, runtime: "2h 10m", genre: "Sci-Fi / Drama", color: "#6b21a8", gradient: "linear-gradient(135deg, #6b21a8 0%, #3b1264 60%, #1a0a2e 100%)",
+        showtimes: [
+          { time: "1:00 PM", format: "Dolby" }, { time: "4:00 PM", format: "Standard" },
+          { time: "7:30 PM", format: "IMAX" }, { time: "10:00 PM", format: "Standard" }
+        ] }
+    ];
+
+    var COMING_SOON = [
+      { title: "Shadow Protocol", date: "Feb 28", genre: "Action / Spy", color: "#0f172a", gradient: "linear-gradient(135deg, #0f172a, #1e293b)" },
+      { title: "Wildflower", date: "Mar 7", genre: "Drama / Family", color: "#b45309", gradient: "linear-gradient(135deg, #b45309, #78350f)" },
+      { title: "Neon Nights", date: "Mar 14", genre: "Comedy / Musical", color: "#7c3aed", gradient: "linear-gradient(135deg, #7c3aed, #4c1d95)" }
+    ];
+
+    var SEAT_MAP = [];
+
+    function initDates() {
+      var strip = document.getElementById("dateStrip");
+      var days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      var html = "";
+      for (var i = 0; i < 10; i++) {
+        var d = new Date();
+        d.setDate(d.getDate() + i);
+        var label = i === 0 ? "Today" : days[d.getDay()];
+        html += '<div class="date-item' + (i === 0 ? ' active' : '') + '" onclick="selectDate(this)" data-testid="date-item-' + i + '">' +
+          '<div class="day-name">' + label + '</div>' +
+          '<div class="day-num">' + d.getDate() + '</div>' +
+          '<div class="month-label">' + months[d.getMonth()] + '</div></div>';
+      }
+      strip.innerHTML = html;
+    }
+
+    function selectDate(el) {
+      document.querySelectorAll(".date-item").forEach(function(d) { d.classList.remove("active"); });
+      el.classList.add("active");
+    }
+
+    function renderStars(score) {
+      var full = Math.floor(score / 2);
+      var half = (score / 2) % 1 >= 0.4;
+      var html = '';
+      for (var i = 0; i < 5; i++) {
+        if (i < full) {
+          html += '<svg class="star-icon" width="14" height="14" viewBox="0 0 24 24" fill="#410099" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+        } else if (i === full && half) {
+          html += '<svg class="star-icon" width="14" height="14" viewBox="0 0 24 24"><defs><linearGradient id="hg"><stop offset="50%" stop-color="#410099"/><stop offset="50%" stop-color="#ddd"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="url(#hg)" stroke="none"/></svg>';
+        } else {
+          html += '<svg class="star-icon" width="14" height="14" viewBox="0 0 24 24" fill="#ddd" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+        }
+      }
+      return html;
+    }
+
+    function renderMovies() {
+      var html = "";
+      MOVIES.forEach(function(m) {
+        html += '<div class="movie-card" data-testid="card-movie-' + m.id + '">' +
+          '<div class="movie-top">' +
+            '<div class="movie-poster" style="background:' + m.gradient + '">' +
+              '<span class="poster-letter">' + m.title.charAt(0) + '</span>' +
+            '</div>' +
+            '<div class="movie-info">' +
+              '<div class="movie-title">' + m.title + '</div>' +
+              '<div class="movie-meta-row">' +
+                '<span class="mpaa-badge">' + m.rating + '</span>' +
+                '<span class="runtime-text">' + m.runtime + '</span>' +
+              '</div>' +
+              '<div class="star-rating">' +
+                renderStars(m.score) +
+                '<span class="star-score">' + m.score + '</span>' +
+                '<span class="star-max">/10</span>' +
+              '</div>' +
+              '<div class="movie-genre">' + m.genre + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="showtimes-section">' +
+            '<div class="showtimes-label">Showtimes</div>' +
+            '<div class="showtimes">' +
+              m.showtimes.map(function(s) {
+                var fmtClass = s.format.toLowerCase();
+                return '<button class="showtime-btn" onclick="selectShowtime(' + m.id + ',\'' + s.time + '\',\'' + s.format + '\')" data-testid="button-showtime-' + m.id + '-' + s.time.replace(/[\s:]/g,'') + '">' +
+                  s.time + '<span class="format ' + fmtClass + '">' + s.format + '</span></button>';
+              }).join("") +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      });
+      document.getElementById("nowPlaying").innerHTML = html;
+    }
+
+    function renderComingSoon() {
+      var html = "";
+      COMING_SOON.forEach(function(m, i) {
+        html += '<div class="coming-soon-card" data-testid="card-coming-soon-' + i + '">' +
+          '<div class="cs-poster" style="background:' + m.gradient + '">' +
+            '<span class="cs-letter">' + m.title.charAt(0) + '</span>' +
+          '</div>' +
+          '<div class="cs-info">' +
+            '<div class="cs-title">' + m.title + '</div>' +
+            '<div class="cs-date-badge">' + m.date + '</div>' +
+            '<div class="cs-genre">' + m.genre + '</div>' +
+          '</div>' +
+          '<button class="cs-notify-btn" data-testid="button-notify-' + i + '">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' +
+          '</button>' +
+        '</div>';
+      });
+      document.getElementById("comingSoon").innerHTML = html;
+    }
+
+    function selectShowtime(movieId, time, format) {
+      if (!authed) {
+        document.getElementById("bridgeStatus").textContent = "Sign in to book tickets";
+        return;
+      }
+      currentMovie = MOVIES.find(function(m) { return m.id === movieId; });
+      currentShowtime = { time: time, format: format };
+      selectedSeats = [];
+      document.getElementById("seatPanelTitle").textContent = currentMovie.title;
+      document.getElementById("seatPanelSubtitle").textContent = time + " \u00B7 " + format;
+      generateSeatMap();
+      renderSeats();
+      updateSummary();
+      document.getElementById("seatModal").classList.add("open");
+    }
+
+    function generateSeatMap() {
+      SEAT_MAP = [];
+      var rows = ["A","B","C","D","E","F","G","H","I","J"];
+      var cols = 10;
+      for (var r = 0; r < rows.length; r++) {
+        var row = [];
+        for (var c = 0; c < cols; c++) {
+          var taken = Math.random() < 0.3;
+          var vip = r >= 8;
+          row.push({ row: rows[r], col: c + 1, taken: taken, vip: vip, selected: false });
+        }
+        SEAT_MAP.push(row);
+      }
+    }
+
+    function renderSeats() {
+      var html = "";
+      SEAT_MAP.forEach(function(row) {
+        html += '<div class="seat-row">';
+        html += '<div class="seat-row-label">' + row[0].row + '</div>';
+        row.forEach(function(seat) {
+          var cls = "seat";
+          if (seat.taken) cls += " taken";
+          if (seat.selected) cls += " selected";
+          if (seat.vip) cls += " vip";
+          html += '<div class="' + cls + '" onclick="toggleSeat(\'' + seat.row + '\',' + seat.col + ')" data-testid="seat-' + seat.row + seat.col + '"></div>';
+        });
+        html += '<div class="seat-row-label">' + row[0].row + '</div>';
+        html += '</div>';
+      });
+      document.getElementById("seatGrid").innerHTML = html;
+    }
+
+    function toggleSeat(rowLabel, col) {
+      SEAT_MAP.forEach(function(row) {
+        row.forEach(function(seat) {
+          if (seat.row === rowLabel && seat.col === col && !seat.taken) {
+            seat.selected = !seat.selected;
+            if (seat.selected) {
+              selectedSeats.push(seat.row + seat.col);
+            } else {
+              selectedSeats = selectedSeats.filter(function(s) { return s !== seat.row + seat.col; });
+            }
+          }
+        });
+      });
+      renderSeats();
+      updateSummary();
+    }
+
+    function updateSummary() {
+      var std = 0; var vip = 0;
+      SEAT_MAP.forEach(function(row) {
+        row.forEach(function(seat) {
+          if (seat.selected) {
+            if (seat.vip) vip++; else std++;
+          }
+        });
+      });
+      var total = (std * TICKET_PRICE) + (vip * VIP_PRICE);
+      var btn = document.getElementById("bookBtn");
+      if (std + vip === 0) {
+        document.getElementById("seatSummary").innerHTML = '<div style="text-align:center;color:#bbb;font-size:13px;padding:8px 0;">Tap seats to select them</div>';
+        btn.disabled = true;
+        btn.textContent = "Select seats to continue";
+        return;
+      }
+      var html = '';
+      if (std > 0) html += '<div class="seat-summary-row"><span>Standard x' + std + '</span><span>$' + (std * TICKET_PRICE).toFixed(2) + '</span></div>';
+      if (vip > 0) html += '<div class="seat-summary-row"><span>VIP x' + vip + '</span><span>$' + (vip * VIP_PRICE).toFixed(2) + '</span></div>';
+      html += '<div class="seat-summary-row"><span>Total</span><span>$' + total.toFixed(2) + '</span></div>';
+      document.getElementById("seatSummary").innerHTML = html;
+      btn.disabled = false;
+      btn.textContent = "Buy " + (std + vip) + " Ticket" + (std + vip > 1 ? "s" : "") + " \u2014 $" + total.toFixed(2);
+    }
+
+    function closeSeatPicker() {
+      document.getElementById("seatModal").classList.remove("open");
+      selectedSeats = [];
+    }
+
+    function handleBook() {
+      var btn = document.getElementById("bookBtn");
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+      var theater = document.getElementById("theaterSelect");
+      var theaterName = theater.options[theater.selectedIndex].text;
+
+      setTimeout(function() {
+        document.getElementById("confirmMovie").innerHTML = "<strong>" + currentMovie.title + "</strong> (" + currentShowtime.format + ")";
+        document.getElementById("confirmTime").innerHTML = currentShowtime.time + " at <strong>" + theaterName + "</strong>";
+        document.getElementById("confirmSeats").innerHTML = "Seats: <strong>" + selectedSeats.join(", ") + "</strong>";
+        document.getElementById("seatModal").classList.remove("open");
+        document.getElementById("confirmOverlay").classList.add("open");
+
+        MiniApp.sendNotification({
+          title: "Booking Confirmed: " + currentMovie.title,
+          body: selectedSeats.length + " ticket(s) for " + currentShowtime.time + " at " + theaterName + ". Enjoy the show!",
+          data: { movie: currentMovie.title, time: currentShowtime.time, seats: selectedSeats }
+        }).catch(function() {});
+      }, 1200);
+    }
+
+    function closeConfirmation() {
+      document.getElementById("confirmOverlay").classList.remove("open");
+      selectedSeats = [];
+    }
+
+    function handleAuth() {
+      var btn = document.getElementById("authBtn");
+      btn.disabled = true;
+      document.getElementById("bridgeStatus").textContent = "SDK: requesting auth...";
+
+      MiniApp.requestAuthCode()
+        .then(function(code) {
+          authed = true;
+          btn.textContent = "Signed In";
+          btn.className = "bridge-btn done";
+          document.getElementById("bridgeStatus").textContent = "SDK: authenticated";
+        })
+        .catch(function(err) {
+          document.getElementById("bridgeStatus").textContent = "Auth: " + err.message;
+          btn.disabled = false;
+        });
+    }
+
+    function handleLocation() {
+      var btn = document.getElementById("locBtn");
+      btn.disabled = true;
+      document.getElementById("bridgeStatus").textContent = "SDK: requesting location...";
+
+      MiniApp.getLocation()
+        .then(function(loc) {
+          var bar = document.getElementById("locationBar");
+          bar.className = "location-bar visible";
+          bar.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Showing theaters near ' + loc.latitude.toFixed(4) + ', ' + loc.longitude.toFixed(4);
+          btn.textContent = "Located";
+          btn.className = "bridge-btn done";
+          document.getElementById("bridgeStatus").textContent = "SDK: location acquired";
+        })
+        .catch(function(err) {
+          var bar = document.getElementById("locationBar");
+          bar.className = "location-bar visible error";
+          bar.innerHTML = err.message;
+          document.getElementById("bridgeStatus").textContent = "Location: " + err.message;
+          btn.disabled = false;
+        });
+    }
+
+    MiniApp.on("error", function(msg) {
+      var bar = document.getElementById("locationBar");
+      bar.className = "location-bar visible error";
+      bar.innerHTML = (msg.message || "Permission denied by host");
+      document.getElementById("bridgeStatus").textContent = "Error: " + msg.code;
+    });
+
+    initDates();
+    renderMovies();
+    renderComingSoon();
+    MiniApp.init().then(function() {
+      document.getElementById("bridgeStatus").textContent = "SDK: connected";
+    });
+  </script>
+</body>
+</html>

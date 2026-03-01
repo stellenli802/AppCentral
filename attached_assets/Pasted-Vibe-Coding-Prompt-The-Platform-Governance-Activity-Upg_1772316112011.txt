@@ -1,0 +1,40 @@
+Vibe Coding Prompt: The "Platform Governance & Activity" Upgrade
+Objective: Refactor the Home screen to prioritize utility over noise, implement a WeChat-inspired "One-Tap Identity" flow, and build a system-level Permissions Manager.
+
+1. Home Screen Refactor (The "Clean" UI)
+
+Remove the full Live Feed list from the Home page. It takes up too much space.
+
+New "Activity Pill": At the very top of the Home screen, add a single, elegant "Activity Pill" that cycles through the latest updates (e.g., "Bus 502 in 3m" → "Pickup Ready"). Tapping this Pill should navigate the user to the Messages/Activity Tab.
+
+Contextual Highlights: Below the Smart Actions, show only the top 2 most urgent activity cards. Add a "View All Activity →" button that leads to the Messages tab.
+
+2. WeChat-Style "One-Tap Identity" (Ref: IMG_9152, IMG_9153)
+
+The Identity Bridge: When a mini-app (like Bullseye Mart) calls Nexus.getUser(), do not just return data.
+
+The Consent Pop-up: Trigger a system-level modal that looks like IMG_9153. It should show the User's Profile Picture, Name, and a message: "[App Name] is requesting your profile information to sign you in."
+
+The Action: Include a prominent "Allow & Sign In" button. Once clicked, return the user's name and a mock JWT token to the mini-app. This eliminates the need for the user to ever type a password or wait for a code within a mini-app.
+
+3. The Permissions Manager (Governance Layer)
+
+State Management: Create a permissions table in the database to track which apps have access to location, identity, and notifications.
+
+The System Modal: When an app requests a permission for the first time, show a standard Platform Modal: "[App Name] wants to access your [Permission]. [Allow Once] [Always Allow] [Deny]".
+
+Settings Integration: Ensure the My Apps or Settings tab has a "Privacy & Permissions" section where a user can see every app and toggle these permissions off at any time.
+
+4. The "Activity Center" (Messages Tab)
+
+Redesign the Messages Tab to be a chronological "Activity Center."
+
+Group notifications by app (e.g., all SparkMart updates together).
+
+Add a "Clear All" button and the ability to swipe-to-delete notifications.
+
+Constraints:
+
+Use shadcn/ui for the modals to ensure they look like part of the "System UI," not the mini-app.
+
+Keep the bridge logic simple: use postMessage with a standardized requestID to track callbacks.

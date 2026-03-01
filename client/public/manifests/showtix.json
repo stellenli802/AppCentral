@@ -1,0 +1,15 @@
+{
+  "id": "showtix",
+  "name": "TicketHub",
+  "description": "Browse movies in theaters, pick showtimes, choose seats, and buy tickets. Your movie night starts here.",
+  "icon": "TicketHubIcon",
+  "color": "#410099",
+  "category": "entertainment",
+  "entryUrl": "/mini-apps/showtix.html",
+  "permissions": ["location", "identity"],
+  "allowedOrigins": ["*"],
+  "version": "2.8.1",
+  "developer": "TicketHub Events",
+  "intents": ["FIND_SHOWTIMES", "BUY_TICKETS", "BROWSE_THEATERS"],
+  "sdk": "/sdk.js"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "transit",
+  "name": "CityMove",
+  "description": "Real-time bus, train, and subway arrivals. View live departures, track vehicles, and plan your commute.",
+  "icon": "CityMoveIcon",
+  "color": "#4CAF50",
+  "category": "transit",
+  "entryUrl": "/mini-apps/transit.html",
+  "permissions": ["location", "identity"],
+  "allowedOrigins": ["*"],
+  "version": "2.1.0",
+  "developer": "CityMove Transit",
+  "intents": ["FIND_TRANSIT", "CHECK_ARRIVALS", "PLAN_COMMUTE"],
+  "sdk": "/sdk.js"
+}

@@ -1,0 +1,51 @@
+Gemini said
+To elevate your app for the buildathon, we are focusing on Identity (The "Wow" Factor) and UI Density (The "OS" Feel).
+
+This prompt is designed to be pasted directly into the Replit Agent. It uses "vibe coding" principles: clear instructions, specific UI references, and a focus on the "Bridge" between the host and mini-apps.
+
+Vibe Coding Prompt: The "Platform Identity & Clean Home" Upgrade
+Objective: Transform the app into a "Governed OS" by implementing a WeChat-inspired One-Tap Login and refactoring the Home screen to be utility-first rather than notification-heavy.
+
+1. Home Screen UI Refactor (The "Clean" Layout)
+
+Remove the long vertical "Live Feed" from the Home page. It takes up too much space.
+
+The Activity Pill: At the top of the Home screen (under the search bar), add a single, sleek "Activity Pill" (like an iPhone Dynamic Island). It should cycle through active updates (e.g., "Bus 502 in 3m" → "Order out for delivery"). Tapping it should navigate to the Messages tab.
+
+Priority Highlights: Below the "Smart Actions," show a "Highlights" section with a maximum of 2 cards. These should be the most urgent notifications. Add a "View All Activity" link that goes to the Messages tab.
+
+2. WeChat-Style One-Tap Identity (The "Hero" Feature)
+
+The SDK Bridge: When a mini-app calls Nexus.getUser(), the host must intercept this message.
+
+The System Modal: Trigger a centered, high-polish modal in the host app (using shadcn/ui).
+
+Header: "[App Name] is requesting your profile info."
+
+Body: Show the user's Avatar, Name, and "Nexus ID."
+
+Actions: A large "Allow & Sign In" button and a "Cancel" button.
+
+The Handshake: Once "Allow" is clicked, the host sends the user's data back to the mini-app iframe. The mini-app should then instantly update to a "Signed In" state (e.g., showing "Welcome, [Name]").
+
+3. Messages Tab "Activity Center"
+
+Redesign the Messages Tab to be the full-screen version of the feed.
+
+Group notifications by the Mini-App that sent them.
+
+Ensure the "Clear All" and "Read All" buttons are persistent and functional, showing a professional "No new activity" empty state when cleared.
+
+4. Quality of Life & Navigation
+
+Context-Aware Back Button: Ensure the "App Permissions" page knows where the user came from. If opened from the Profile tab, the back button must return to Profile (not Home or My Apps).
+
+Profile Tab Expansion: Add a "Personal Info" and "Payment Methods" section to the Profile tab to make the "Super App" ecosystem feel complete.
+
+Constraints:
+
+Use Tailwind CSS for all UI updates.
+
+Ensure the iframe bridge logic is dry and uses postMessage with a request/response ID pattern to avoid message collisions.
+
+Keep the "Brand-Adjacent" names (Bullseye Mart, PrimeCart, etc.) consistent across the UI.

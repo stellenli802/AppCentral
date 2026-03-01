@@ -1,0 +1,219 @@
+You are my senior full-stack engineer.
+
+We are building a 3-week hackathon MVP called “Nexus” — a Mini-App Platform + Smart Task Router.
+
+IMPORTANT:
+This is NOT an “app that embeds Uber/Yelp.”
+This is a platform that:
+1) Hosts real mini-apps built on our runtime.
+2) Intelligently routes users to external services via deep link or web fallback.
+3) Demonstrates platform extensibility.
+
+Keep architecture clean, simple, and demo-ready.
+Do not over-engineer.
+
+-----------------------------------
+TECH STACK
+-----------------------------------
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Simple in-memory store OR SQLite (choose simplest working option)
+- No complex auth — use a simple mock login system (local session-based)
+
+-----------------------------------
+ARCHITECTURE GOAL
+-----------------------------------
+
+We need to demonstrate:
+
+1) A Mini-App Runtime
+2) A Secure Host <-> Mini-App Message Bridge
+3) A Mini-App Manifest System
+4) Smart Task Routing
+5) Deep link + Web fallback system
+6) Clean UI for demo
+
+This should feel like infrastructure.
+
+-----------------------------------
+FOLDER STRUCTURE
+-----------------------------------
+
+/apps/hub (main container app)
+/apps/miniapps (3 real mini-apps)
+/packages/shared (types, message schemas)
+
+-----------------------------------
+CORE FEATURES TO BUILD
+-----------------------------------
+
+1) AUTH (Simple Mock)
+- Login page (enter name → session)
+- Protected dashboard
+- Store user in session/local storage
+
+2) DASHBOARD (Home)
+Sections:
+- Greeting
+- Search bar
+- Smart Actions (dynamic suggestions)
+- Favorites
+- Mini-App Grid
+
+3) MINI-APP MANIFEST SYSTEM
+
+Create a manifest object:
+
+MiniApp {
+  id: string
+  name: string
+  description: string
+  category: string
+  entryUrl: string
+  allowedOrigin: string
+  permissions: string[]
+}
+
+Seed with 3 mini-apps:
+- Transit Now
+- ParkFinder
+- Travel Hub
+
+4) MINI-APP RUNNER
+
+Route: /runner/[id]
+
+Features:
+- Loads mini-app inside iframe
+- Header with back button + favorite toggle
+- Secure postMessage bridge
+- Validate origin
+- Validate message schema (use zod)
+
+Supported bridge messages:
+
+MiniApp -> Host:
+- REQUEST_AUTH_CODE
+- REQUEST_LOCATION
+
+Host -> MiniApp:
+- AUTH_CODE
+- LOCATION
+
+Auth code:
+Generate short random string (mock for demo).
+
+Location:
+Return fake lat/lng for demo.
+
+5) BUILD 3 REAL MINI-APPS
+
+Inside /apps/miniapps:
+
+Mini-App 1: Transit Now
+- Displays mock arrival times
+- Requests location via bridge
+- Displays location
+
+Mini-App 2: ParkFinder
+- Displays mock nearby parking spots
+- Requests auth code
+- Shows “Logged in as: [user]”
+
+Mini-App 3: Travel Hub
+- Shows quick airline search shortcuts
+- Has button “Search Flights”
+- Simulate search
+
+Each mini-app must:
+- Communicate with host
+- Handle bridge responses
+- Look like a real product
+
+6) SMART TASK ROUTER
+
+On main search bar:
+
+User types:
+- “ride”
+- “restaurant”
+- “flight”
+- “bus”
+
+Implement simple keyword-based routing logic:
+
+If:
+“bus” → suggest Transit Now mini-app
+“parking” → ParkFinder
+“flight” → Travel Hub
+“uber” → show external provider option
+
+7) EXTERNAL SERVICE ROUTING
+
+Implement:
+
+openExternalService(provider)
+
+Behavior:
+- Attempt deep link (simulate)
+- If fails → open mobile web in new tab
+
+Providers (demo only):
+- Uber
+- Yelp
+- Expedia
+
+This is routing only. No scraping. No embedding protected content.
+
+-----------------------------------
+UI REQUIREMENTS
+-----------------------------------
+
+- Clean light theme
+- Rounded cards
+- Minimal design
+- Looks like a platform, not a folder of icons
+
+Screens:
+- Login
+- Dashboard
+- Runner
+- My Apps
+- Permissions page
+
+-----------------------------------
+SECURITY SIMULATION
+-----------------------------------
+
+- Validate iframe origin
+- Reject unknown message types
+- Show simple permission toggle UI
+
+-----------------------------------
+README
+-----------------------------------
+
+Include:
+- How to run
+- How to add new mini-app
+- How bridge works
+- What is mocked
+- Platform architecture explanation
+
+-----------------------------------
+IMPORTANT
+-----------------------------------
+
+Prioritize working end-to-end demo over complexity.
+Keep code readable.
+No unnecessary abstractions.
+Do not introduce extra libraries unless needed.
+Deliver a functioning MVP.
+
+Start by:
+1) Creating the monorepo structure
+2) Setting up Next.js app for hub
+3) Creating shared types
+4) Then building dashboard

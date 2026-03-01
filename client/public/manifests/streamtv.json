@@ -1,0 +1,15 @@
+{
+  "id": "streamtv",
+  "name": "StreamTV",
+  "description": "Watch trending videos, subscribe to channels, and discover content across music, gaming, news, and more.",
+  "icon": "StreamTVIcon",
+  "color": "#FF0000",
+  "category": "entertainment",
+  "entryUrl": "/mini-apps/streamtv.html",
+  "permissions": ["identity"],
+  "allowedOrigins": ["*"],
+  "version": "5.1.3",
+  "developer": "VideoNet Labs",
+  "intents": ["WATCH_VIDEO", "BROWSE_CHANNELS", "SEARCH_CONTENT"],
+  "sdk": "/sdk.js"
+}

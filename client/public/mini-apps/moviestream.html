@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamFlix</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #141414; color: #e5e5e5; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+
+    .header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 70%, rgba(0,0,0,0)); transition: background 0.3s; }
+    .logo-wrap { display: flex; align-items: center; gap: 6px; }
+    .logo-n { font-size: 32px; font-weight: 900; color: #E50914; line-height: 1; font-family: 'Helvetica Neue', Impact, sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+    .logo-text { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+    .sdk-badge { display: inline-block; background: rgba(229,9,20,0.2); border: 1px solid rgba(229,9,20,0.4); padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 700; letter-spacing: 0.5px; color: #E50914; text-transform: uppercase; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .search-box { display: flex; align-items: center; }
+    .search-box input { width: 0; background: transparent; border: 1px solid transparent; color: #fff; font-size: 13px; padding: 6px 10px; border-radius: 4px; transition: all 0.3s; outline: none; }
+    .search-box input.open { width: 160px; background: rgba(0,0,0,0.75); border-color: #fff; }
+    .search-toggle { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 6px; }
+
+    .nav-tabs { display: flex; gap: 0; padding: 0 12px; background: rgba(0,0,0,0.6); overflow-x: auto; scrollbar-width: none; }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .nav-tab { padding: 10px 16px; font-size: 12px; font-weight: 500; color: #808080; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; flex-shrink: 0; }
+    .nav-tab.active { color: #fff; font-weight: 700; border-bottom-color: #E50914; }
+    .nav-tab:hover { color: #b3b3b3; }
+
+    .bridge-bar { background: rgba(26,26,46,0.9); border-bottom: 1px solid #2a2a3e; padding: 8px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .bridge-btn { background: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600; letter-spacing: 0.3px; }
+    .bridge-btn:hover { background: #f40612; }
+    .bridge-btn.done { background: #46d369; pointer-events: none; }
+    .bridge-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .bridge-status { font-size: 11px; color: #777; flex: 1; text-align: right; }
+
+    .hero { position: relative; height: 420px; overflow: hidden; }
+    .hero-bg { width: 100%; height: 100%; }
+    .hero-poster { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+    .hero-gradient { position: absolute; inset: 0; background: linear-gradient(0deg, #141414 0%, rgba(20,20,20,0.85) 15%, rgba(20,20,20,0.4) 40%, rgba(20,20,20,0.1) 60%, rgba(0,0,0,0.3) 100%); }
+    .hero-vignette { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.5) 0%, transparent 50%); }
+    .hero-content { position: absolute; bottom: 40px; left: 16px; right: 16px; z-index: 2; }
+    .hero-logo-title { font-size: 36px; font-weight: 900; color: #fff; line-height: 1.05; margin-bottom: 8px; text-shadow: 2px 4px 6px rgba(0,0,0,0.6); letter-spacing: -0.5px; }
+    .hero-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #bcbcbc; margin-bottom: 8px; flex-wrap: wrap; }
+    .hero-match { color: #46d369; font-weight: 700; }
+    .hero-rating { border: 1px solid #808080; padding: 1px 5px; border-radius: 2px; font-size: 10px; font-weight: 500; color: #bcbcbc; }
+    .hero-new { background: #E50914; color: #fff; padding: 1px 6px; border-radius: 2px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+    .hero-desc { font-size: 12px; color: #d2d2d2; line-height: 1.5; max-width: 400px; margin-bottom: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .hero-actions { display: flex; gap: 8px; }
+    .btn-play { background: #fff; color: #000; border: none; padding: 10px 24px; border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; }
+    .btn-play:hover { background: rgba(255,255,255,0.8); }
+    .btn-play svg { width: 20px; height: 20px; fill: #000; }
+    .btn-list { background: rgba(109,109,110,0.7); color: #fff; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; }
+    .btn-list:hover { background: rgba(109,109,110,0.4); }
+    .btn-list.added { background: rgba(34,197,94,0.25); border: 1px solid rgba(34,197,94,0.5); }
+    .btn-info { background: transparent; color: #fff; border: none; padding: 10px 6px; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .btn-info svg { width: 24px; height: 24px; stroke: #fff; fill: none; stroke-width: 2; }
+
+    .row { padding: 0 16px; margin-bottom: 24px; }
+    .row-header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .row-title { font-size: 16px; font-weight: 700; color: #fff; }
+    .row-see-all { font-size: 11px; color: #808080; cursor: pointer; white-space: nowrap; }
+    .row-see-all:hover { color: #b3b3b3; }
+    .row-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+    .row-scroll::-webkit-scrollbar { display: none; }
+
+    .card { min-width: 130px; max-width: 130px; border-radius: 6px; overflow: hidden; cursor: pointer; position: relative; flex-shrink: 0; transition: transform 0.2s; }
+    .card:hover { transform: scale(1.05); }
+    .card-poster { width: 130px; height: 185px; display: flex; align-items: center; justify-content: center; position: relative; }
+    .card-poster .play-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+    .card:hover .play-overlay { opacity: 1; }
+    .play-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .play-icon::after { content: ""; display: block; width: 0; height: 0; border-style: solid; border-width: 8px 0 8px 14px; border-color: transparent transparent transparent #141414; margin-left: 3px; }
+    .card-info { padding: 6px 4px; }
+    .card-title { font-size: 11px; font-weight: 600; color: #e5e5e5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-sub { font-size: 10px; color: #808080; margin-top: 2px; }
+
+    .top10-card { min-width: 170px; max-width: 170px; display: flex; align-items: flex-end; flex-shrink: 0; cursor: pointer; position: relative; }
+    .top10-number { font-size: 100px; font-weight: 900; color: #141414; -webkit-text-stroke: 3px #808080; line-height: 0.8; margin-right: -14px; z-index: 1; font-family: 'Helvetica Neue', Impact, sans-serif; user-select: none; }
+    .top10-card .card-poster { min-width: 100px; max-width: 100px; width: 100px; height: 145px; border-radius: 6px; overflow: hidden; }
+    .top10-card:hover { transform: scale(1.03); transition: transform 0.2s; }
+
+    .continue-section { padding: 0 16px; margin-bottom: 24px; display: none; }
+    .continue-section.visible { display: block; }
+    .continue-card { min-width: 170px; max-width: 170px; border-radius: 6px; overflow: hidden; flex-shrink: 0; background: #1a1a1a; cursor: pointer; transition: transform 0.2s; }
+    .continue-card:hover { transform: scale(1.03); }
+    .continue-poster { width: 170px; height: 96px; display: flex; align-items: center; justify-content: center; position: relative; }
+    .continue-poster .play-overlay-sm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); }
+    .play-icon-sm { width: 32px; height: 32px; background: rgba(255,255,255,0.85); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.9); }
+    .play-icon-sm::after { content: ""; display: block; width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 9px; border-color: transparent transparent transparent #141414; margin-left: 2px; }
+    .progress-bar-bg { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: #333; }
+    .progress-bar { height: 3px; background: #E50914; }
+    .continue-info { padding: 8px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+    .continue-title { font-size: 11px; font-weight: 600; color: #e5e5e5; }
+    .continue-ep { font-size: 10px; color: #808080; }
+    .continue-more { background: none; border: none; color: #808080; font-size: 16px; cursor: pointer; padding: 2px; }
+
+    .my-list-section { padding: 0 16px; margin-bottom: 24px; display: none; }
+    .my-list-section.visible { display: block; }
+    .my-list-empty { font-size: 12px; color: #555; padding: 12px 0; }
+
+    .search-results { padding: 16px; display: none; }
+    .search-results.visible { display: block; }
+    .search-results-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 12px; }
+    .search-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .main-content {}
+
+    .bottom-section { padding: 16px; margin-top: 8px; border-top: 1px solid #222; }
+    .bottom-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .bottom-title svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; }
+    .download-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #222; }
+    .download-thumb { width: 56px; height: 32px; border-radius: 4px; flex-shrink: 0; }
+    .download-info { flex: 1; }
+    .download-name { font-size: 12px; font-weight: 600; color: #e5e5e5; }
+    .download-detail { font-size: 10px; color: #808080; margin-top: 2px; }
+    .download-status { font-size: 10px; color: #46d369; font-weight: 600; }
+    .more-info-section { padding: 16px; }
+    .info-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #222; cursor: pointer; }
+    .info-row:last-child { border-bottom: none; }
+    .info-icon { width: 36px; height: 36px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .info-icon svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; }
+    .info-label { font-size: 13px; color: #e5e5e5; flex: 1; }
+    .info-arrow { color: #808080; font-size: 14px; }
+
+    .poster-0 { background: linear-gradient(135deg, #1a1a2e, #16213e); }
+    .poster-1 { background: linear-gradient(135deg, #2d132c, #4a0e4e); }
+    .poster-2 { background: linear-gradient(135deg, #1b4332, #2d6a4f); }
+    .poster-3 { background: linear-gradient(135deg, #3c1518, #69140e); }
+    .poster-4 { background: linear-gradient(135deg, #1d3557, #457b9d); }
+    .poster-5 { background: linear-gradient(135deg, #3a0ca3, #7209b7); }
+    .poster-6 { background: linear-gradient(135deg, #6b2d23, #b7410e); }
+    .poster-7 { background: linear-gradient(135deg, #2b2d42, #8d99ae); }
+    .poster-8 { background: linear-gradient(135deg, #1b263b, #415a77); }
+    .poster-9 { background: linear-gradient(135deg, #3d405b, #81b29a); }
+
+    .new-badge { position: absolute; top: 6px; left: 6px; background: #E50914; color: #fff; font-size: 8px; font-weight: 700; padding: 2px 5px; border-radius: 2px; letter-spacing: 0.5px; text-transform: uppercase; z-index: 2; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-wrap">
+      <span class="logo-n">S</span>
+      <span class="logo-text">StreamFlix</span>
+    </div>
+    <span class="sdk-badge">SDK v1</span>
+    <div class="header-right">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search titles..." oninput="handleSearch(this.value)" />
+        <button class="search-toggle" onclick="toggleSearch()" id="searchBtn" data-testid="button-search-toggle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-tabs" id="navTabs">
+    <div class="nav-tab active" onclick="switchNavTab(this, 'home')" data-testid="tab-home">Home</div>
+    <div class="nav-tab" onclick="switchNavTab(this, 'tvshows')" data-testid="tab-tvshows">TV Shows</div>
+    <div class="nav-tab" onclick="switchNavTab(this, 'movies')" data-testid="tab-movies">Movies</div>
+    <div class="nav-tab" onclick="switchNavTab(this, 'mylist')" data-testid="tab-mylist">My List</div>
+  </div>
+
+  <div class="bridge-bar">
+    <button class="bridge-btn" onclick="handleAuth()" id="authBtn" data-testid="button-auth">Sign In</button>
+    <span class="bridge-status" id="bridgeStatus">SDK: initializing</span>
+  </div>
+
+  <div class="search-results" id="searchResults">
+    <div class="search-results-title">Search Results</div>
+    <div class="search-grid" id="searchGrid"></div>
+  </div>
+
+  <div class="main-content" id="mainContent">
+    <div class="hero">
+      <div class="card-poster hero-poster hero-bg" style="width:100%;height:100%;"></div>
+      <div class="hero-gradient"></div>
+      <div class="hero-vignette"></div>
+      <div class="hero-content">
+        <span class="hero-new">S Series</span>
+        <div class="hero-logo-title">Shadow Protocol</div>
+        <div class="hero-meta">
+          <span class="hero-match">97% Match</span>
+          <span>2025</span>
+          <span class="hero-rating">TV-MA</span>
+          <span>2 Seasons</span>
+        </div>
+        <div class="hero-desc">A covert intelligence operative uncovers a global conspiracy that threatens to unravel the fabric of modern democracy.</div>
+        <div class="hero-actions">
+          <button class="btn-play" data-testid="button-play-hero">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" fill="#000"/></svg>
+            Play
+          </button>
+          <button class="btn-list" onclick="toggleMyList('shadow-protocol', 'Shadow Protocol')" id="heroListBtn" data-testid="button-mylist-hero">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            My List
+          </button>
+          <button class="btn-info" data-testid="button-info-hero">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Info
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="continue-section" id="continueSection">
+      <div class="row-header">
+        <div class="row-title">Continue Watching</div>
+        <span class="row-see-all">See All &rsaquo;</span>
+      </div>
+      <div class="row-scroll" id="continueRow"></div>
+    </div>
+
+    <div class="my-list-section" id="myListSection">
+      <div class="row-header">
+        <div class="row-title">My List</div>
+        <span class="row-see-all">See All &rsaquo;</span>
+      </div>
+      <div class="row-scroll" id="myListRow"></div>
+      <div class="my-list-empty" id="myListEmpty">Your list is empty. Tap + on shows and movies to save them here.</div>
+    </div>
+
+    <div id="genreRows"></div>
+
+    <div class="bottom-section">
+      <div class="bottom-title">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Downloads
+      </div>
+      <div class="download-item">
+        <div class="download-thumb poster-0"></div>
+        <div class="download-info">
+          <div class="download-name">Shadow Protocol S2 E4</div>
+          <div class="download-detail">720p &middot; 287 MB</div>
+        </div>
+        <div class="download-status">Ready</div>
+      </div>
+      <div class="download-item">
+        <div class="download-thumb poster-4"></div>
+        <div class="download-info">
+          <div class="download-name">Neon Nights S1 E7</div>
+          <div class="download-detail">1080p &middot; 512 MB</div>
+        </div>
+        <div class="download-status">Ready</div>
+      </div>
+      <div class="download-item">
+        <div class="download-thumb poster-1"></div>
+        <div class="download-info">
+          <div class="download-name">The Last Ember S3 E1</div>
+          <div class="download-detail">720p &middot; 345 MB</div>
+        </div>
+        <div class="download-status" style="color:#E50914;">Downloading 62%</div>
+      </div>
+    </div>
+
+    <div class="more-info-section">
+      <div class="bottom-title">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        More Info
+      </div>
+      <div class="info-row" data-testid="link-app-settings">
+        <div class="info-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </div>
+        <span class="info-label">App Settings</span>
+        <span class="info-arrow">&rsaquo;</span>
+      </div>
+      <div class="info-row" data-testid="link-help">
+        <div class="info-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <span class="info-label">Help Center</span>
+        <span class="info-arrow">&rsaquo;</span>
+      </div>
+      <div class="info-row" data-testid="link-privacy">
+        <div class="info-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <span class="info-label">Privacy &amp; Terms</span>
+        <span class="info-arrow">&rsaquo;</span>
+      </div>
+      <div class="info-row" data-testid="link-version">
+        <div class="info-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </div>
+        <span class="info-label">Version 4.2.1 (Build 8823)</span>
+        <span class="info-arrow">&rsaquo;</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/sdk/v1.js"></script>
+  <script>
+    var authed = false;
+    var myList = {};
+
+    var GENRES = {
+      trending: {
+        title: "Trending Now",
+        top10: true,
+        items: [
+          { id: "t1", title: "Neon Nights", year: "2025", genre: "Sci-Fi", poster: 0 },
+          { id: "t2", title: "The Last Ember", year: "2024", genre: "Drama", poster: 1 },
+          { id: "t3", title: "Velocity", year: "2025", genre: "Action", poster: 2 },
+          { id: "t4", title: "Crimson Tide", year: "2024", genre: "Thriller", poster: 3 },
+          { id: "t5", title: "Digital Frontier", year: "2025", genre: "Sci-Fi", poster: 4 },
+          { id: "t6", title: "Midnight Sun", year: "2024", genre: "Romance", poster: 5 },
+          { id: "t7", title: "Iron Will", year: "2025", genre: "Action", poster: 6 },
+          { id: "t8", title: "The Exchange", year: "2024", genre: "Thriller", poster: 7 },
+          { id: "t9", title: "Abyss Walker", year: "2025", genre: "Horror", poster: 8 },
+          { id: "t10", title: "Glass Empire", year: "2024", genre: "Drama", poster: 9 },
+        ]
+      },
+      newReleases: {
+        title: "New Releases",
+        isNew: true,
+        items: [
+          { id: "n1", title: "Quantum Shift", year: "2025", genre: "Sci-Fi", poster: 4 },
+          { id: "n2", title: "Wild Hearts", year: "2025", genre: "Romance", poster: 5 },
+          { id: "n3", title: "The Reckoning", year: "2025", genre: "Thriller", poster: 3 },
+          { id: "n4", title: "Echoes", year: "2025", genre: "Drama", poster: 1 },
+          { id: "n5", title: "Firewall", year: "2025", genre: "Action", poster: 6 },
+          { id: "n6", title: "The Divide", year: "2025", genre: "Drama", poster: 8 },
+        ]
+      },
+      action: {
+        title: "Action & Adventure",
+        items: [
+          { id: "a1", title: "Strike Force", year: "2025", genre: "Action", poster: 3 },
+          { id: "a2", title: "Outpost Zero", year: "2024", genre: "Action", poster: 8 },
+          { id: "a3", title: "Rogue Agent", year: "2025", genre: "Action", poster: 0 },
+          { id: "a4", title: "Titan Fall", year: "2024", genre: "Action", poster: 6 },
+          { id: "a5", title: "Storm Chaser", year: "2025", genre: "Adventure", poster: 2 },
+          { id: "a6", title: "The Heist", year: "2024", genre: "Action", poster: 9 },
+          { id: "a7", title: "Code Red", year: "2025", genre: "Action", poster: 4 },
+        ]
+      },
+      comedy: {
+        title: "Comedy",
+        items: [
+          { id: "c1", title: "Family Chaos", year: "2025", genre: "Comedy", poster: 5 },
+          { id: "c2", title: "Office Wars", year: "2024", genre: "Comedy", poster: 7 },
+          { id: "c3", title: "Roommates", year: "2025", genre: "Comedy", poster: 1 },
+          { id: "c4", title: "The Misadventure", year: "2024", genre: "Comedy", poster: 9 },
+          { id: "c5", title: "Laugh Track", year: "2025", genre: "Comedy", poster: 0 },
+          { id: "c6", title: "Double Take", year: "2024", genre: "Comedy", poster: 8 },
+        ]
+      },
+      drama: {
+        title: "Drama",
+        items: [
+          { id: "d1", title: "Broken Promises", year: "2025", genre: "Drama", poster: 1 },
+          { id: "d2", title: "The Verdict", year: "2024", genre: "Drama", poster: 3 },
+          { id: "d3", title: "Silent Waters", year: "2025", genre: "Drama", poster: 8 },
+          { id: "d4", title: "Generations", year: "2024", genre: "Drama", poster: 5 },
+          { id: "d5", title: "The Crossing", year: "2025", genre: "Drama", poster: 2 },
+          { id: "d6", title: "Autumn Road", year: "2024", genre: "Drama", poster: 9 },
+          { id: "d7", title: "Foundation", year: "2025", genre: "Drama", poster: 4 },
+        ]
+      }
+    };
+
+    var CONTINUE_WATCHING = [
+      { id: "cw1", title: "Shadow Protocol", ep: "S2 E4", progress: 65, poster: 0 },
+      { id: "cw2", title: "Neon Nights", ep: "S1 E7", progress: 30, poster: 4 },
+      { id: "cw3", title: "The Last Ember", ep: "S3 E1", progress: 80, poster: 1 },
+      { id: "cw4", title: "Velocity", ep: "S1 E3", progress: 45, poster: 6 },
+    ];
+
+    function getAllItems() {
+      var all = [];
+      Object.keys(GENRES).forEach(function(key) {
+        GENRES[key].items.forEach(function(item) { all.push(item); });
+      });
+      return all;
+    }
+
+    function renderCard(item, isNew) {
+      return '<div class="card" onclick="cardClick(\'' + item.id + '\', \'' + item.title.replace(/'/g, "\\'") + '\')" data-testid="card-movie-' + item.id + '">' +
+        '<div class="card-poster poster-' + item.poster + '">' +
+          (isNew ? '<span class="new-badge">New</span>' : '') +
+          '<div class="play-overlay"><div class="play-icon"></div></div>' +
+        '</div>' +
+        '<div class="card-info">' +
+          '<div class="card-title">' + item.title + '</div>' +
+          '<div class="card-sub">' + item.year + ' &middot; ' + item.genre + '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function renderTop10Card(item, index) {
+      return '<div class="top10-card" onclick="cardClick(\'' + item.id + '\', \'' + item.title.replace(/'/g, "\\'") + '\')" data-testid="card-top10-' + item.id + '">' +
+        '<span class="top10-number">' + (index + 1) + '</span>' +
+        '<div class="card-poster poster-' + item.poster + '"></div>' +
+      '</div>';
+    }
+
+    function renderGenreRows() {
+      var html = "";
+      Object.keys(GENRES).forEach(function(key) {
+        var genre = GENRES[key];
+        html += '<div class="row">' +
+          '<div class="row-header"><div class="row-title">' + genre.title + '</div><span class="row-see-all">See All &rsaquo;</span></div>' +
+          '<div class="row-scroll">';
+        if (genre.top10) {
+          html += genre.items.map(function(item, i) { return renderTop10Card(item, i); }).join("");
+        } else {
+          html += genre.items.map(function(item) { return renderCard(item, genre.isNew); }).join("");
+        }
+        html += '</div></div>';
+      });
+      document.getElementById("genreRows").innerHTML = html;
+    }
+
+    function renderContinueWatching() {
+      var section = document.getElementById("continueSection");
+      if (!authed) { section.classList.remove("visible"); return; }
+      section.classList.add("visible");
+      document.getElementById("continueRow").innerHTML = CONTINUE_WATCHING.map(function(item) {
+        return '<div class="continue-card" data-testid="card-continue-' + item.id + '">' +
+          '<div class="continue-poster poster-' + item.poster + '">' +
+            '<div class="play-overlay-sm"><div class="play-icon-sm"></div></div>' +
+            '<div class="progress-bar-bg"><div class="progress-bar" style="width:' + item.progress + '%"></div></div>' +
+          '</div>' +
+          '<div class="continue-info">' +
+            '<div><div class="continue-title">' + item.title + '</div>' +
+            '<div class="continue-ep">' + item.ep + '</div></div>' +
+            '<button class="continue-more" aria-label="More options">&#8942;</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+    }
+
+    function renderMyList() {
+      var section = document.getElementById("myListSection");
+      var keys = Object.keys(myList);
+      section.classList.add("visible");
+      var empty = document.getElementById("myListEmpty");
+      var row = document.getElementById("myListRow");
+      if (keys.length === 0) {
+        empty.style.display = "block";
+        row.innerHTML = "";
+        return;
+      }
+      empty.style.display = "none";
+      var allItems = getAllItems();
+      row.innerHTML = keys.map(function(id) {
+        var found = null;
+        allItems.forEach(function(item) { if (item.id === id) found = item; });
+        if (!found) {
+          found = { id: id, title: myList[id], year: "", genre: "", poster: Math.floor(Math.random() * 10) };
+        }
+        return renderCard(found, false);
+      }).join("");
+    }
+
+    function toggleMyList(id, title) {
+      if (myList[id]) {
+        delete myList[id];
+      } else {
+        myList[id] = title;
+      }
+      updateHeroListBtn();
+      renderMyList();
+    }
+
+    function updateHeroListBtn() {
+      var btn = document.getElementById("heroListBtn");
+      if (myList["shadow-protocol"]) {
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> My List';
+        btn.classList.add("added");
+      } else {
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> My List';
+        btn.classList.remove("added");
+      }
+    }
+
+    function cardClick(id, title) {
+      toggleMyList(id, title);
+    }
+
+    function toggleSearch() {
+      var input = document.getElementById("searchInput");
+      input.classList.toggle("open");
+      if (input.classList.contains("open")) {
+        input.focus();
+      } else {
+        input.value = "";
+        handleSearch("");
+      }
+    }
+
+    function handleSearch(query) {
+      var results = document.getElementById("searchResults");
+      var main = document.getElementById("mainContent");
+      if (!query || query.length < 2) {
+        results.classList.remove("visible");
+        main.style.display = "";
+        return;
+      }
+      var q = query.toLowerCase();
+      var all = getAllItems();
+      var matched = all.filter(function(item) {
+        return item.title.toLowerCase().indexOf(q) !== -1 || item.genre.toLowerCase().indexOf(q) !== -1;
+      });
+      var unique = {};
+      matched = matched.filter(function(item) {
+        if (unique[item.id]) return false;
+        unique[item.id] = true;
+        return true;
+      });
+      results.classList.add("visible");
+      main.style.display = "none";
+      document.getElementById("searchGrid").innerHTML = matched.length > 0
+        ? matched.map(function(item) { return renderCard(item, false); }).join("")
+        : '<div style="grid-column:1/-1;color:#555;font-size:13px;padding:20px 0;">No results found for "' + query + '"</div>';
+    }
+
+    function switchNavTab(el, tab) {
+      document.querySelectorAll(".nav-tab").forEach(function(t) { t.classList.remove("active"); });
+      el.classList.add("active");
+    }
+
+    function handleAuth() {
+      var btn = document.getElementById("authBtn");
+      btn.disabled = true;
+      document.getElementById("bridgeStatus").textContent = "SDK: requesting auth...";
+
+      MiniApp.requestAuthCode()
+        .then(function(code) {
+          authed = true;
+          btn.textContent = "Signed In";
+          btn.className = "bridge-btn done";
+          document.getElementById("bridgeStatus").textContent = "SDK: authenticated";
+          renderContinueWatching();
+
+          setTimeout(function() {
+            MiniApp.sendNotification({
+              title: "New on StreamFlix",
+              body: "Shadow Protocol Season 3 is now streaming. Watch the thrilling new season today!",
+              data: { show: "Shadow Protocol", season: 3 }
+            }).catch(function() {});
+          }, 3000);
+        })
+        .catch(function(err) {
+          document.getElementById("bridgeStatus").textContent = "Auth: " + err.message;
+          btn.disabled = false;
+        });
+    }
+
+    MiniApp.on("error", function(msg) {
+      document.getElementById("bridgeStatus").textContent = "Error: " + (msg.code || msg.message);
+    });
+
+    renderGenreRows();
+    renderMyList();
+    MiniApp.init().then(function() {
+      document.getElementById("bridgeStatus").textContent = "SDK: connected";
+    });
+  </script>
+</body>
+</html>

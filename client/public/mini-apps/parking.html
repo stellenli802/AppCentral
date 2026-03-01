@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpotHero</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+    .header { background: linear-gradient(135deg, #1A73E8, #1557B0); color: white; padding: 20px; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .sdk-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; margin-left: 6px; letter-spacing: 0.5px; }
+    .bridge-bar { display: flex; gap: 8px; padding: 12px 16px; background: white; border-bottom: 1px solid #e2e8f0; }
+    .bridge-btn { flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; color: #475569; }
+    .bridge-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .bridge-btn.active { background: #E8F0FE; border-color: #1A73E8; color: #1557B0; }
+    .bridge-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status-bar { padding: 10px 16px; background: #E8F0FE; border-bottom: 1px solid #A8C7FA; font-size: 11px; color: #1A56DB; display: none; align-items: center; gap: 6px; }
+    .status-bar.visible { display: flex; }
+    .status-bar.error { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .content { padding: 16px; }
+    .map-area { background: #e2e8f0; border-radius: 10px; height: 140px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: #94a3b8; font-size: 13px; flex-direction: column; gap: 4px; transition: all 0.3s; }
+    .map-area.located { background: #C2D9FF; color: #1A56DB; }
+    .lot-card { background: white; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
+    .lot-main { padding: 14px 16px; display: flex; gap: 14px; }
+    .lot-indicator { width: 4px; border-radius: 4px; flex-shrink: 0; }
+    .lot-indicator.high { background: #22c55e; }
+    .lot-indicator.medium { background: #f59e0b; }
+    .lot-indicator.low { background: #ef4444; }
+    .lot-info { flex: 1; }
+    .lot-name { font-size: 14px; font-weight: 600; }
+    .lot-address { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .lot-meta { display: flex; gap: 16px; margin-top: 10px; }
+    .lot-stat-value { font-size: 16px; font-weight: 700; }
+    .lot-stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .lot-footer { padding: 10px 16px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+    .lot-price { font-size: 13px; font-weight: 600; color: #1A73E8; }
+    .lot-distance { font-size: 11px; color: #94a3b8; }
+    .lot-nav-btn { background: #1A73E8; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500; }
+    .auth-badge { display: inline-block; background: #E8F0FE; color: #1557B0; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; margin-left: 8px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .lot-card { animation: fadeIn 0.3s ease; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1" style="vertical-align: middle; margin-right: 6px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><text x="12" y="14" text-anchor="middle" fill="#1A73E8" font-size="11" font-weight="bold" stroke="none" font-family="sans-serif">P</text></svg>SpotHero <span class="sdk-badge">SDK v1</span></h1>
+    <p>Find available parking near you</p>
+  </div>
+
+  <div class="bridge-bar">
+    <button class="bridge-btn" onclick="handleLocation()" id="locBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg>
+      Near Me
+    </button>
+    <button class="bridge-btn" onclick="handleAuth()" id="authBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+      Sign In
+    </button>
+  </div>
+
+  <div class="status-bar" id="statusBar"></div>
+
+  <div class="content">
+    <div class="map-area" id="mapArea">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span>Tap "Near Me" to find parking</span>
+    </div>
+    <div id="lots"></div>
+  </div>
+
+  <script src="/sdk/v1.js"></script>
+  <script>
+    var userAuthed = false;
+
+    var LOTS = [
+      { name: "City Center Garage", address: "123 Main St", spots: 45, total: 200, price: "$3.50/hr", distance: "0.1 mi", availability: "high" },
+      { name: "Market Square Lot", address: "456 Market Ave", spots: 12, total: 80, price: "$2.75/hr", distance: "0.3 mi", availability: "medium" },
+      { name: "Riverside Parking", address: "789 River Rd", spots: 3, total: 50, price: "$4.00/hr", distance: "0.5 mi", availability: "low" },
+      { name: "Union Station Deck", address: "321 Railroad Blvd", spots: 78, total: 300, price: "$2.00/hr", distance: "0.8 mi", availability: "high" },
+    ];
+
+    function renderLots() {
+      document.getElementById("lots").innerHTML = LOTS.map(function(lot) {
+        return '<div class="lot-card">' +
+          '<div class="lot-main">' +
+            '<div class="lot-indicator ' + lot.availability + '"></div>' +
+            '<div class="lot-info">' +
+              '<div class="lot-name">' + lot.name + (userAuthed ? '<span class="auth-badge">Logged in</span>' : '') + '</div>' +
+              '<div class="lot-address">' + lot.address + '</div>' +
+              '<div class="lot-meta">' +
+                '<div><div class="lot-stat-value">' + lot.spots + '</div><div class="lot-stat-label">Available</div></div>' +
+                '<div><div class="lot-stat-value">' + lot.total + '</div><div class="lot-stat-label">Total</div></div>' +
+                '<div><div class="lot-stat-value">' + Math.round((lot.spots/lot.total)*100) + '%</div><div class="lot-stat-label">Free</div></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="lot-footer">' +
+            '<div><span class="lot-price">' + lot.price + '</span><span class="lot-distance"> &middot; ' + lot.distance + '</span></div>' +
+            '<button class="lot-nav-btn">Navigate</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+    }
+
+    function showStatus(msg, isError) {
+      var bar = document.getElementById("statusBar");
+      bar.className = "status-bar visible" + (isError ? " error" : "");
+      bar.textContent = (isError ? "\u274C " : "\u2705 ") + msg;
+    }
+
+    function handleLocation() {
+      var btn = document.getElementById("locBtn");
+      btn.disabled = true;
+      showStatus("Requesting location via SDK...", false);
+
+      MiniApp.getLocation()
+        .then(function(loc) {
+          var map = document.getElementById("mapArea");
+          map.className = "map-area located";
+          map.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A56DB" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+            '<span style="font-weight:500">Location found</span>' +
+            '<span style="font-size:11px">' + loc.latitude.toFixed(4) + ', ' + loc.longitude.toFixed(4) + '</span>';
+          showStatus("Location acquired via SDK.", false);
+          btn.className = "bridge-btn active";
+          btn.textContent = "Located";
+        })
+        .catch(function(err) {
+          showStatus(err.message || "Location failed", true);
+          btn.disabled = false;
+        });
+    }
+
+    function handleAuth() {
+      var btn = document.getElementById("authBtn");
+      btn.disabled = true;
+      showStatus("Requesting auth code via SDK...", false);
+
+      MiniApp.requestAuthCode()
+        .then(function(code) {
+          userAuthed = true;
+          showStatus("Authenticated via SDK. Code: " + code.slice(0, 20) + "...", false);
+          btn.className = "bridge-btn active";
+          btn.textContent = "Signed In";
+          renderLots();
+
+          setTimeout(function() {
+            MiniApp.sendNotification({
+              title: "Parking Session Started",
+              body: "Your parking at Downtown Garage (Level 2, Spot B14) is now active. Session expires at 6:00 PM.",
+              data: { lotName: "Downtown Garage", spot: "B14", validUntil: "6:00 PM" }
+            }).catch(function() {});
+          }, 2000);
+        })
+        .catch(function(err) {
+          showStatus(err.message || "Auth failed", true);
+          btn.disabled = false;
+        });
+    }
+
+    MiniApp.on("error", function(msg) {
+      showStatus(msg.message || "Permission denied by host", true);
+    });
+
+    renderLots();
+    MiniApp.init();
+  </script>
+</body>
+</html>

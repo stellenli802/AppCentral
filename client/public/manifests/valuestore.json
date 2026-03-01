@@ -1,0 +1,15 @@
+{
+  "id": "valuestore",
+  "name": "SparkMart",
+  "description": "Everyday low prices on grocery, electronics, pharmacy, and more. Order for pickup or delivery from your local store.",
+  "icon": "SparkMartIcon",
+  "color": "#0071CE",
+  "category": "shopping",
+  "entryUrl": "/mini-apps/valuestore.html",
+  "permissions": ["location", "identity"],
+  "allowedOrigins": ["*"],
+  "version": "4.1.0",
+  "developer": "SparkMart Tech",
+  "intents": ["SHOP_GROCERIES", "FIND_STORE", "ORDER_PICKUP"],
+  "sdk": "/sdk.js"
+}

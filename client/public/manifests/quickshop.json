@@ -1,0 +1,15 @@
+{
+  "id": "quickshop",
+  "name": "PrimeCart",
+  "description": "Find deals, browse categories, and track deliveries. Fast shopping with next-day delivery on millions of items.",
+  "icon": "PrimeCartIcon",
+  "color": "#232F3E",
+  "category": "shopping",
+  "entryUrl": "/mini-apps/quickshop.html",
+  "permissions": ["identity"],
+  "allowedOrigins": ["*"],
+  "version": "6.0.2",
+  "developer": "PrimeCart Corp",
+  "intents": ["SHOP_DEALS", "TRACK_DELIVERY", "BROWSE_PRODUCTS"],
+  "sdk": "/sdk.js"
+}

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CityMove</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+    .header { background: linear-gradient(135deg, #4CAF50, #388E3C); color: white; padding: 20px; position: sticky; top: 0; z-index: 10; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .sdk-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; margin-left: 6px; letter-spacing: 0.5px; }
+    .bridge-bar { background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 10px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .bridge-btn { background: #4CAF50; color: white; border: none; padding: 6px 14px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+    .bridge-btn:hover { background: #388E3C; }
+    .bridge-btn.done { background: #22c55e; pointer-events: none; }
+    .bridge-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .bridge-status { font-size: 11px; color: #64748b; flex: 1; text-align: right; }
+    .location-bar { background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 8px 16px; font-size: 11px; color: #15803d; display: none; align-items: center; gap: 6px; }
+    .location-bar.visible { display: flex; }
+    .location-bar.error { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .content { padding: 16px; }
+    .tab-bar { display: flex; gap: 4px; margin-bottom: 16px; background: #f1f5f9; padding: 4px; border-radius: 8px; }
+    .tab { flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; color: #64748b; }
+    .tab.active { background: white; color: #1e293b; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+    .station-card { background: white; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
+    .station-header { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+    .station-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .station-name { font-size: 14px; font-weight: 600; }
+    .station-distance { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+    .arrival { display: flex; align-items: center; padding: 10px 16px; gap: 12px; border-bottom: 1px solid #f8fafc; }
+    .arrival:last-child { border-bottom: none; }
+    .route-badge { min-width: 36px; text-align: center; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; color: white; }
+    .arrival-dest { flex: 1; font-size: 13px; }
+    .arrival-time { font-size: 14px; font-weight: 600; }
+    .arrival-time.soon { color: #ef4444; }
+    .arrival-time.normal { color: #22c55e; }
+    .arrival-min { font-size: 10px; color: #94a3b8; font-weight: 400; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><svg viewBox="0 0 24 24" fill="none" width="20" height="20" style="display:inline-block;vertical-align:middle;margin-right:4px"><rect x="5" y="8" width="14" height="8" rx="2" fill="white"/><rect x="6" y="6" width="5" height="4" rx="1" fill="white" opacity="0.7"/><rect x="12" y="7" width="5" height="3" rx="1" fill="white" opacity="0.7"/><circle cx="8.5" cy="17" r="1.5" fill="#4CAF50" stroke="white" stroke-width="0.5"/><circle cx="15.5" cy="17" r="1.5" fill="#4CAF50" stroke="white" stroke-width="0.5"/></svg> CityMove <span class="sdk-badge">SDK v1</span></h1>
+    <p>Real-time arrivals &amp; departures</p>
+  </div>
+
+  <div class="bridge-bar">
+    <button class="bridge-btn" onclick="handleAuth()" id="authBtn">Sign In</button>
+    <button class="bridge-btn" onclick="handleLocation()" id="locBtn">Get Location</button>
+    <span class="bridge-status" id="bridgeStatus">SDK: initializing</span>
+  </div>
+
+  <div class="location-bar" id="locationBar"></div>
+
+  <div class="content">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab(this, 'bus')">Bus</div>
+      <div class="tab" onclick="switchTab(this, 'train')">Train</div>
+      <div class="tab" onclick="switchTab(this, 'subway')">Subway</div>
+    </div>
+    <div id="stations"></div>
+  </div>
+
+  <script src="/sdk/v1.js"></script>
+  <script>
+    var authed = false;
+
+    var DATA = {
+      bus: [
+        { name: "Central Station", distance: "0.2 mi", icon: "&#128652;", iconBg: "#dbeafe",
+          arrivals: [
+            { route: "14", color: "#3b82f6", dest: "Downtown Express", time: 2 },
+            { route: "22", color: "#8b5cf6", dest: "University Loop", time: 8 },
+            { route: "7", color: "#ef4444", dest: "Riverside Park", time: 14 },
+          ] },
+        { name: "Market Street", distance: "0.5 mi", icon: "&#128652;", iconBg: "#dbeafe",
+          arrivals: [
+            { route: "3", color: "#10b981", dest: "Harbor Terminal", time: 5 },
+            { route: "14", color: "#3b82f6", dest: "Airport Shuttle", time: 11 },
+          ] },
+      ],
+      train: [
+        { name: "Union Station", distance: "0.8 mi", icon: "&#128642;", iconBg: "#fef3c7",
+          arrivals: [
+            { route: "NE", color: "#f59e0b", dest: "Northeast Regional", time: 12 },
+            { route: "EX", color: "#6366f1", dest: "Express Line", time: 25 },
+          ] },
+      ],
+      subway: [
+        { name: "Metro Center", distance: "0.3 mi", icon: "&#128647;", iconBg: "#e0e7ff",
+          arrivals: [
+            { route: "A", color: "#3b82f6", dest: "Blue Line - North", time: 1 },
+            { route: "B", color: "#ef4444", dest: "Red Line - South", time: 4 },
+            { route: "C", color: "#22c55e", dest: "Green Line - West", time: 7 },
+          ] },
+      ],
+    };
+
+    function render(type) {
+      var stations = DATA[type] || [];
+      document.getElementById("stations").innerHTML = stations.map(function(s) {
+        return '<div class="station-card">' +
+          '<div class="station-header">' +
+            '<div class="station-icon" style="background:' + s.iconBg + '">' + s.icon + '</div>' +
+            '<div>' +
+              '<div class="station-name">' + s.name + '</div>' +
+              '<div class="station-distance">' + s.distance + '</div>' +
+            '</div>' +
+            '<div style="margin-left:auto"><div class="live-dot"></div></div>' +
+          '</div>' +
+          s.arrivals.map(function(a) {
+            return '<div class="arrival">' +
+              '<div class="route-badge" style="background:' + a.color + '">' + a.route + '</div>' +
+              '<div class="arrival-dest">' + a.dest + '</div>' +
+              '<div class="arrival-time ' + (a.time <= 3 ? 'soon' : 'normal') + '">' + a.time + ' <span class="arrival-min">min</span></div>' +
+            '</div>';
+          }).join("") +
+        '</div>';
+      }).join("");
+    }
+
+    function switchTab(el, type) {
+      document.querySelectorAll(".tab").forEach(function(t) { t.classList.remove("active"); });
+      el.classList.add("active");
+      render(type);
+    }
+
+    function handleAuth() {
+      var btn = document.getElementById("authBtn");
+      btn.disabled = true;
+      document.getElementById("bridgeStatus").textContent = "SDK: requesting auth...";
+
+      MiniApp.requestAuthCode()
+        .then(function(code) {
+          authed = true;
+          btn.textContent = "Signed In";
+          btn.className = "bridge-btn done";
+          document.getElementById("bridgeStatus").textContent = "SDK: authenticated";
+
+          setTimeout(function() {
+            MiniApp.sendNotification({
+              title: "Service Alert: Line 7 Delays",
+              body: "Line 7 is experiencing delays of 10-15 minutes due to signal maintenance between Central and Park stations.",
+              data: { line: "7", delay: "10-15 min", reason: "Signal maintenance" }
+            }).catch(function() {});
+          }, 3000);
+        })
+        .catch(function(err) {
+          document.getElementById("bridgeStatus").textContent = "Auth: " + err.message;
+          btn.disabled = false;
+        });
+    }
+
+    function handleLocation() {
+      var btn = document.getElementById("locBtn");
+      btn.disabled = true;
+      document.getElementById("bridgeStatus").textContent = "SDK: requesting location...";
+
+      MiniApp.getLocation()
+        .then(function(loc) {
+          var bar = document.getElementById("locationBar");
+          bar.className = "location-bar visible";
+          bar.innerHTML = "&#128205; Location: " + loc.latitude.toFixed(4) + ", " + loc.longitude.toFixed(4);
+          btn.textContent = "Located";
+          btn.className = "bridge-btn done";
+          document.getElementById("bridgeStatus").textContent = "SDK: location acquired";
+        })
+        .catch(function(err) {
+          var bar = document.getElementById("locationBar");
+          bar.className = "location-bar visible error";
+          bar.innerHTML = "&#10060; " + err.message;
+          document.getElementById("bridgeStatus").textContent = "Location: " + err.message;
+          btn.disabled = false;
+        });
+    }
+
+    MiniApp.on("error", function(msg) {
+      var bar = document.getElementById("locationBar");
+      bar.className = "location-bar visible error";
+      bar.innerHTML = "&#128683; " + (msg.message || "Permission denied by host");
+      document.getElementById("bridgeStatus").textContent = "Error: " + msg.code;
+    });
+
+    render("bus");
+    MiniApp.init().then(function() {
+      document.getElementById("bridgeStatus").textContent = "SDK: connected";
+    });
+  </script>
+</body>
+</html>

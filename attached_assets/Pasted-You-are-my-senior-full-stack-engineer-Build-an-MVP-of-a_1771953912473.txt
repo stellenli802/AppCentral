@@ -1,0 +1,91 @@
+You are my senior full-stack engineer. Build an MVP of an “App Central / Mini-app hub” that feels like WeChat mini-programs, but web-first.
+
+Goal (3-week hackathon MVP):
+- A single hub app that lets users browse/search mini-apps and launch them inside an embedded “runner”.
+- Mini-apps are simple web apps/pages that run inside an iframe, with a safe host<->miniapp message bridge.
+- Users log in once to the hub; mini-apps can request a short-lived auth code from the host and exchange it for a mini-app session (simulated for MVP).
+
+Constraints:
+- Use TypeScript.
+- Keep it simple and readable. No over-engineering.
+- Use a monorepo structure inside this Replit project.
+- Provide clear step-by-step run instructions.
+
+Tech choices:
+- Next.js (App Router) for the hub app UI.
+- A lightweight backend using Next.js route handlers (no separate server).
+- Database: start with an in-memory store or SQLite via Prisma (choose simplest that works on Replit). If you pick Prisma, include schema + migration steps.
+- Auth: use NextAuth (GitHub provider) OR a simple email magic-link mock (choose easiest to demo). Must support “current user” and sessions.
+- Styling: Tailwind.
+
+Core MVP features:
+1) Authenticated hub
+- Login, logout, and a protected dashboard.
+
+2) Mini-app catalog
+- A list/grid of mini-app tiles: name, category, icon (placeholder), description.
+- Search and category filter.
+- “Favorite” toggle per user.
+
+3) Mini-app runner
+- Clicking a tile opens /runner/[id] page with an iframe.
+- Show a small header bar: Back, Favorite, Open in new tab.
+- Implement postMessage bridge:
+  - miniapp -> host: "REQUEST_AUTH_CODE"
+  - host -> miniapp: "AUTH_CODE" (short-lived random string)
+  - miniapp -> host: "REQUEST_LOCATION" (host returns fake location for MVP)
+  - host -> miniapp: "LOCATION"
+- Security:
+  - Only allow messages from the iframe origin you registered in the mini-app manifest.
+  - Validate message types and payload schemas.
+  - Never expose secrets in the browser.
+
+4) Mini-app manifest format
+- Create a manifest object/table with:
+  - id, name, category, description
+  - entryUrl (where iframe loads from)
+  - allowedOrigin
+  - permissions: ["location"] etc.
+- Seed with 3 mini-apps:
+  - Transit mini-app: displays “Arrivals” list (mock data is fine)
+  - Parking mini-app: displays “Nearby parking options” (mock)
+  - Travel mini-app: “Airline check-in shortcuts” (links)
+
+5) Example mini-app code
+- In /miniapps, create simple Next.js pages (or static pages) that can be embedded.
+- Each mini-app should:
+  - render its UI
+  - call postMessage to request auth code
+  - display “Logged in as user: …” after receiving host response (fake ok)
+  - request location if permission exists and display it
+
+Deliverables in this Replit:
+- Working hub app + runner.
+- 3 embedded mini-apps.
+- Clear README with:
+  - how to run
+  - how to add a new mini-app
+  - how the bridge works
+  - what’s mocked vs real
+
+Implementation plan:
+- First, scaffold the monorepo folders:
+  /apps/hub (Next.js hub)
+  /apps/miniapps (Next.js miniapps)
+  /packages/shared (types + message schemas)
+- Then implement shared types:
+  - MiniAppManifest type
+  - postMessage event schemas with zod validation
+- Then build hub pages:
+  - /login
+  - /dashboard (catalog)
+  - /runner/[id]
+- Then build the mini-app pages and ensure the bridge works end-to-end.
+- Finally, polish UI minimally (clean + fast) and add favorites per user.
+
+Important:
+- Prefer shipping something that works end-to-end over perfect architecture.
+- Write minimal tests only if quick; prioritize functioning demo.
+- Keep commits/sections logically separated (even if not using git).
+
+Start now by generating the folder structure and the Next.js setup for both apps, plus the shared package with message schemas.
