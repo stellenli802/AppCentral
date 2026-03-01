@@ -8,6 +8,30 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
 
+const isDevAuthBypassEnabled = () => process.env.DEV_AUTH_BYPASS === "true";
+
+const DEV_USER_CLAIMS = {
+  sub: "dev-local-user",
+  email: "dev-local@appcentral.local",
+  first_name: "Local",
+  last_name: "Developer",
+  profile_image_url: null,
+};
+
+let devUserInitialized = false;
+
+async function ensureDevUser() {
+  if (devUserInitialized) return;
+  await authStorage.upsertUser({
+    id: DEV_USER_CLAIMS.sub,
+    email: DEV_USER_CLAIMS.email,
+    firstName: DEV_USER_CLAIMS.first_name,
+    lastName: DEV_USER_CLAIMS.last_name,
+    profileImageUrl: DEV_USER_CLAIMS.profile_image_url,
+  });
+  devUserInitialized = true;
+}
+
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
@@ -62,6 +86,27 @@ async function upsertUser(claims: any) {
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
+
+  if (isDevAuthBypassEnabled()) {
+    await ensureDevUser();
+
+    app.use((req: any, _res, next) => {
+      req.user = {
+        claims: DEV_USER_CLAIMS,
+        access_token: "dev-access-token",
+        refresh_token: "dev-refresh-token",
+        expires_at: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+      };
+      req.isAuthenticated = () => true;
+      next();
+    });
+
+    app.get("/api/login", (_req, res) => res.redirect("/"));
+    app.get("/api/callback", (_req, res) => res.redirect("/"));
+    app.get("/api/logout", (_req, res) => res.redirect("/"));
+    return;
+  }
+
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
@@ -131,6 +176,10 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  if (isDevAuthBypassEnabled()) {
+    return next();
+  }
+
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {
