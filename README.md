@@ -1,9 +1,17 @@
 # AppCentral
 
-AppCentral is a full-stack web app with:
-- React + Vite frontend
-- Express + TypeScript backend
-- PostgreSQL + Drizzle ORM
+## Intro
+AppCentral is a mobile-first mini-app platform that brings multiple everyday services into one host app. Users can discover and launch mini-apps (transportation, shopping, entertainment), receive notifications and live activity updates, and route tasks through a smart intent-based search experience.
+
+The core idea is to combine:
+- A secure mini-app runtime (sandboxed iframes + bridge messaging)
+- A governance model (manifest-defined app permissions/capabilities)
+- A unified host UX (home feed, activity center, search, and app management)
+
+This repository contains the full-stack implementation:
+- Frontend: React + Vite
+- Backend: Express + TypeScript
+- Database: PostgreSQL + Drizzle ORM
 
 ## Run Locally
 
